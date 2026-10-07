@@ -15,7 +15,7 @@ Help retention managers explore cancellation patterns and organise proposed rete
 
 **Goal:** Establish the product backlog and development environment, and demonstrate an Angular application connected to a FastAPI backend and PostgreSQL database.
 
-**Board:** Add the real public GitHub Projects URL here after creating the board.  
+**Board:** [Sprint planning and task tracking](https://github.com/users/KAMATE12/projects/3).  
 **Sprint plan:** [Tasks and acceptance criteria](docs/sprint-1-plan.md)  
 **Product backlog:** [Prioritised epics and tasks](docs/product-backlog.md)
 
