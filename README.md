@@ -21,7 +21,17 @@ Help retention managers explore cancellation patterns and organise proposed rete
 
 ## Current status
 
-This repository contains a starter skeleton and proposed sprint plan. The application displays connection status, not customer statistics. Importing data, analytics, and retention actions are future work. A supplied starter is not evidence that the student has completed every task: issues are closed after local verification and explanation.
+The local application skeleton has been verified on Windows.
+Angular communicates with FastAPI, and FastAPI executes a real
+PostgreSQL query through the readiness endpoint.
+
+Database availability, unavailability and recovery were checked
+during S1-06. The interface displays connection status, not
+customer statistics.
+
+S1-01 through S1-06 are complete. S1-07 is in progress.
+Customer data import, analytics and retention-action management
+remain future work.
 
 ## Stack and structure
 
@@ -31,7 +41,9 @@ This repository contains a starter skeleton and proposed sprint plan. The applic
 - `docs/`: sprint plan, backlog, data design, reading notes and demo checklist.
 - `.github/workflows/checks.yml`: automated backend tests and frontend build.
 
-The planned MVP will also use pandas, SQLAlchemy, Chart.js, and browser tests. These are added when their features are developed.
+SQLAlchemy and psycopg are already used for PostgreSQL connectivity.
+The planned MVP will also use pandas, Chart.js and browser tests
+when the corresponding features are developed.
 
 ## Run locally
 
@@ -40,10 +52,16 @@ Use Node.js 24, Python 3.12, Git, and Docker Desktop with Compose. Windows Power
 From the repository root:
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+}
 ```
 
 Edit `.env`: replace the example password in BOTH `POSTGRES_PASSWORD` and `DATABASE_URL` with the same local password. For this exercise use letters and numbers to avoid URL-encoding issues.
+The database is published at 127.0.0.1:5433 on Windows.
+PostgreSQL inside the container uses port 5432.
+Keep the host port in DATABASE_URL consistent with compose.yaml.
+Restart FastAPI after changing .env.
 
 ```powershell
 docker compose up -d db
@@ -65,6 +83,8 @@ Open http://localhost:4200 and click **Check connections**. API documentation: h
 
 ## Verify
 
+See the [verification history, results and limitations](docs/verification.md).
+
 In a third terminal at the root:
 
 ```powershell
@@ -78,7 +98,15 @@ These automated backend tests mock PostgreSQL. Confirm the real database connect
 
 ## Data design and evidence
 
-[Proposed data model and cancellation definition](docs/data-design.md). No database tables or datasets are implemented yet. Add a screenshot after verifying the application on your computer. Local development only; public application deployment is future work.
+See the [proposed data model and cancellation definition](docs/data-design.md).
+
+No customer tables or customer datasets have been implemented yet.
+The PostgreSQL service and real connectivity check are operational.
+
+See the [S1-06 verification report](docs/S1-06-postgresql-data-model.md)
+and [issue #6 with completion evidence](https://github.com/KAMATE12/RtreamRetain/issues/6).
+
+Local development only; public application deployment remains future work.
 
 ## Sprint reports
 
