@@ -30,3 +30,154 @@ Lower viewing may be associated with cancellation; it does not establish the cau
 ## Proposed retention_action fields
 
 id, segment_description, proposed_action, rationale, status, created_at. Initial statuses: Proposed, In Progress, Completed. Marking an action Completed describes the workflow; it does not prove that retention improved.
+
+## Proposed entities, identifiers and relationships
+
+This is a design proposal for future implementation.
+No customer tables are created in Sprint 1.
+
+### Customer
+
+A customer represents a fictional subscriber.
+The proposed primary key is customer_id: a required synthetic
+identifier that remains stable across observation months.
+
+No real names, email addresses or other personal identifiers
+are required.
+
+### Customer month
+
+A customer_month record describes one eligible customer during
+one calendar month.
+
+The proposed composite primary key is:
+(customer_id, observation_month).
+
+customer_id references the proposed Customer entity.
+One customer can have many monthly observations.
+Each monthly observation belongs to exactly one customer.
+
+The same customer must not appear twice for the same month.
+observation_month includes the year and is stored as the first
+day of the month, for example 2026-10-01.
+
+### Retention action
+
+A retention_action record describes a proposed action for a
+customer segment.
+
+Its proposed primary key is id.
+segment_description explains which group the action targets.
+
+In this initial design, the segment is described in text.
+There is no foreign-key relationship between retention_action
+and individual customers or monthly observations.
+
+A future version may introduce structured segments and explicit
+relationships if the product requires them.
+
+
+## Churn definition and observation period
+
+### Initial operational definition
+
+For this educational project, cancelled_in_month is true when
+a customer in the start-of-month cohort submits at least one
+subscription cancellation request during the observation month.
+
+This measures cancellation requests, not necessarily the end
+of paid access. A request counts in the month it is submitted,
+even if access ends later.
+
+Repeated requests by the same customer in the same month count
+once. A later withdrawal of the request does not erase the
+event from this initial metric.
+
+Payment failures or low viewing activity alone do not count
+as cancellation. Automatic termination due to non-payment is
+outside this initial definition.
+
+### Observation window and cohort
+
+Use calendar months with UTC boundaries:
+month start is included; next month start is excluded.
+
+For October 2026, the window is:
+2026-10-01 00:00:00 UTC <= event time < 2026-11-01 00:00:00 UTC.
+
+The cohort contains customers with an active subscription at
+the start of the month. Customers joining during the month
+are excluded from that month's initial cohort.
+
+For the initial synthetic dataset, assume at most one active
+subscription per customer at a time.
+
+Only fully observed months are used for the final monthly rate.
+Missing cancellation information must not be treated as false.
+
+### Calculation
+
+Monthly cancellation rate (%) =
+100 * distinct cohort customers who requested cancellation
+during the month / distinct customers in the start-of-month cohort.
+
+If the cohort is empty, display "No data".
+Do not replace an undefined rate with 0%.
+
+Example: 20 cancelling customers in a cohort of 100 gives 20%.
+This is an illustrative example, not an observed project result.
+
+### Synthetic data scope
+
+All future customer records will be artificially generated
+for this educational project.
+
+They are not real IVI customer records. Patterns in these data
+reflect generation assumptions and cannot establish actual
+cancellation causes or retention effectiveness at IVI.
+
+## Additional field definitions and validation rules
+
+These rules are proposed for future implementation.
+They are not yet enforced by database tables or import code.
+
+### Monthly observations
+
+All fields listed in customer_month are required in the initial
+dataset. Reject missing values rather than silently replacing
+them with zero or false.
+
+| Field | Proposed definition and validation |
+|---|---|
+| customer_id | Non-empty synthetic identifier referencing an existing customer. |
+| observation_month | Valid date representing the first day of the observed month. |
+| plan | Plan at month start. Initial fictional categories: Basic, Standard, Premium. |
+| tenure_months | Completed months since the current subscription period began, measured at month start; integer >= 0. |
+| viewing_hours | Total viewing hours during the observation month; finite number >= 0. |
+| payment_failures | Number of failed payment attempts during the month; integer >= 0. |
+| support_requests | Number of distinct support tickets opened during the month; integer >= 0. |
+| cancelled_in_month | Boolean indicating a cancellation request, using the operational definition above. |
+
+Plan categories are project assumptions, not verified IVI plans.
+A plan change during the month does not change the recorded
+start-of-month plan.
+
+Monthly activity totals cover the observation window, including
+activity after a cancellation request if access remains active.
+
+The pair (customer_id, observation_month) must be unique.
+Duplicate observations must be reported rather than counted twice.
+
+### Retention actions
+
+| Field | Proposed definition and validation |
+|---|---|
+| id | Unique, non-empty action identifier. |
+| segment_description | Required text describing the target customer group. |
+| proposed_action | Required text describing the suggested intervention. |
+| rationale | Required text explaining why the action is proposed; assumptions must be distinguished from evidence. |
+| status | One of: Proposed, In Progress, Completed. Initial value: Proposed. |
+| created_at | Required creation timestamp recorded in UTC. |
+
+Completed means the action workflow is complete.
+It does not establish that the action reduced cancellations.

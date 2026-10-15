@@ -5,19 +5,42 @@ Use Windows PowerShell at the repository root. Prerequisites: Git, Node.js 24, P
 ## A. Local configuration and database
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+}
 ```
 
-This copies example settings into your local configuration. Edit .env and replace the example password in BOTH POSTGRES_PASSWORD and DATABASE_URL with the same local alphanumeric password. .env stays on your computer; .env.example is shared.
+This creates the local configuration only if .env does not already exist. Edit .env and replace the example password in BOTH POSTGRES_PASSWORD and DATABASE_URL with the same local alphanumeric password. .env stays on your computer; .env.example is shared.
 
 ```powershell
 docker compose up -d db
 docker compose ps
 ```
+Compose reads compose.yaml. `up` creates/starts the database
+service, `-d` keeps it in the background, and `db` selects it.
+`ps` shows whether it is running and healthy. The named volume
+preserves database files across container restarts.
 
-Compose reads compose.yaml. `up` creates/starts the database service, `-d` keeps it in the background, and `db` selects it. `ps` shows whether it is running and healthy. The named volume preserves database files across container restarts. Port 5432 is bound to your local computer only.
+The project publishes PostgreSQL at 127.0.0.1:5433 on the host.
+Inside the container, PostgreSQL still listens on port 5432.
+The mapping in compose.yaml is "127.0.0.1:5433:5432".
+Access through this published port is restricted to the local computer.
 
-If port 5432 is already used by another PostgreSQL installation, change the left-hand port in compose.yaml, for example 127.0.0.1:5433:5432, and use localhost:5433 in DATABASE_URL. The container still uses its internal port 5432.
+DATABASE_URL in .env must use host 127.0.0.1 and port 5433
+when FastAPI runs directly on Windows. The shared .env.example
+uses this same port.
+
+Port 5433 was selected because an existing local PostgreSQL
+installation already occupied port 5432. That installation
+does not need to be stopped.
+
+If host port 5433 is unavailable on another computer, choose
+an available host port and update both the left-hand port in
+compose.yaml and the port in the local DATABASE_URL.
+Keep the container port at 5432.
+
+After changing .env, stop and restart FastAPI so it reloads
+the configuration.
 
 ## B. Backend in terminal 1
 
