@@ -7,9 +7,10 @@ Project: StreamRetain
 Sprint: October 5–18, 2026
 Report prepared: October 16, 2026
 
-Status: Prepared for submission — course-chat posting pending.
-The recorded demo is 13 minutes long, exceeding the requested
-3–5 minutes. A shorter version or instructor acceptance is pending.
+Status: Submitted to the course chat on October 18, 2026.
+The message and ZIP containing the demonstration were posted.
+The 13-minute video exceeds the requested 3–5 minutes.
+A shorter version or explicit instructor acceptance remains pending.
 
 ## 1. Sprint goal and outcome
 
@@ -220,6 +221,7 @@ tasks, using the proposed data model and cancellation definition.
 
 Confirm the scope during Sprint 2 planning.
 Do not treat all remaining product features as committed work.
+
 ## 11. Submission checklist
 
 - [x] Record the demonstration: 13 minutes.
@@ -228,8 +230,8 @@ Do not treat all remaining product features as committed work.
 - [x] Upload the video as a GitHub Release asset.
 - [x] Add the actual GitHub Release link to this report.
 - [x] Verify that the video can be downloaded while signed out.
-- [ ] Attach the ZIP containing the video to the course chat.
-- [ ] Post the GitHub video link, sprint review, retrospective
+- [x] Attach the ZIP containing the video to the course chat.
+- [x] Post the GitHub video link, sprint review, retrospective
       and reading takeaways in the course chat.
 - [ ] Record the actual submission date and the course-chat
       message link, if available.
@@ -243,10 +245,5 @@ https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo
 
 Video duration: 13 minutes.
 Planned submission deadline: October 17, 2026, in the evening.
-Actual submission date: Pending.
-Course-chat message link: Pending, if available.
-
-Planned submission deadline: October 17, 2026, in the evening.
-Actual submission date: Pending.
-GitHub video link: Pending upload.
+Actual submission date: October 18, 2026.
 Course-chat message link: Pending, if available.

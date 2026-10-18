@@ -30,10 +30,10 @@ during S1-06. The interface displays connection status, not
 customer statistics.
 
 S1-01 through S1-07 are complete.
-S1-08 is in progress: reading notes and the sprint report are
-prepared, and a 13-minute demo has been recorded.
-Course-chat submission is pending. The demo exceeds the requested
-3–5 minutes; a shorter version or instructor acceptance is pending.
+The S1-08 review, retrospective, reading takeaways and demo
+were submitted to the course chat on October 18, 2026.
+The 13-minute demo exceeds the requested 3–5 minutes;
+a shorter version or instructor acceptance remains pending.
 Customer data import, analytics and retention-action management
 remain future work.
 
