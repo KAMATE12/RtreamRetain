@@ -6,11 +6,13 @@ Course: Agile Development Methodologies
 Project: StreamRetain
 Sprint: October 5–18, 2026
 Report prepared: October 16, 2026
+Last updated: October 18, 2026
 
-Status: Submitted to the course chat on October 18, 2026.
-The message and ZIP containing the demonstration were posted.
-The 13-minute video exceeds the requested 3–5 minutes.
-A shorter version or explicit instructor acceptance remains pending.
+Status: Completed.
+The review, retrospective, reading takeaways and demonstration
+were submitted to the course chat on October 18, 2026.
+The instructor accepted the 13-minute demonstration.
+S1-08 is complete.
 
 ## 1. Sprint goal and outcome
 
@@ -23,8 +25,11 @@ The local application communicates with the API and a real PostgreSQL
 database. The backlog, setup instructions and proposed data model
 are documented.
 
-Sprint closure is still in progress: S1-08 requires the demo video
-and submission of the review, retrospective and reading takeaways.
+S1-01 through S1-08 are complete. The review, retrospective,
+reading takeaways and demo have been submitted.
+
+Submission took place on October 18, after the planned
+October 17 evening deadline.
 
 ## 2. Project links
 
@@ -32,12 +37,11 @@ and submission of the review, retrospective and reading takeaways.
 - Board: https://github.com/users/KAMATE12/projects/3
 - Verification history: [verification.md](verification.md)
 - Reading notes: [reading-notes.md](reading-notes.md)
-- Demo video: [Download the Sprint 1 demonstration](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo).
-  Duration: 13 minutes.
-  A ZIP copy is prepared for course-chat submission.
-  The requested 3–5 minute duration is not yet met.
-  A ZIP copy is also prepared for direct course-chat submission.
-  The requested 3–5 minute duration is not yet met.
+- Demo video: [Download the Sprint 1 demonstration](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo)
+
+The demonstration lasts 13 minutes.
+The instructor accepted this duration.
+A ZIP containing the video was also posted in the course chat.
 
 ## 3. Completed work
 
@@ -102,6 +106,27 @@ checks succeeded.
 
 Evidence: [Verification history](verification.md)
 
+### S1-08 — Reading, demonstration and sprint review
+
+Reading notes connect the studied product concepts to StreamRetain's
+target user, proposed value and planned features.
+
+The sprint review and retrospective document actual results,
+limitations, difficulties and two improvements for the next sprint.
+
+A 13-minute demonstration was published as a GitHub Release asset.
+The video ZIP and submission message were posted in the course chat
+on October 18, 2026.
+
+The instructor accepted the demonstration's duration.
+Completion evidence was added and the board was updated.
+
+Evidence:
+
+- [Reading notes](reading-notes.md)
+- [Demo release](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo)
+- This sprint review and retrospective.
+
 ## 4. Verification results
 
 Checks recorded on October 15, 2026:
@@ -119,12 +144,11 @@ Failure and recovery evidence from S1-06 complements these checks.
 A successful build does not prove browser behavior or analytical
 correctness.
 
-## 5. Incomplete work and current limitations
+## 5. Future work and current limitations
 
-S1-08 remains in progress until the demo and submission are complete.
+Sprint 1 is complete within its technical-foundation scope.
 
-The following are future product features, not completed
-Sprint 1 functionality:
+The following are future product features:
 
 - Synthetic customer data import.
 - Cancellation indicators and segment comparisons.
@@ -222,28 +246,25 @@ tasks, using the proposed data model and cancellation definition.
 Confirm the scope during Sprint 2 planning.
 Do not treat all remaining product features as committed work.
 
-## 11. Submission checklist
+## 11. Submission and closure checklist
 
 - [x] Record the demonstration: 13 minutes.
-- [ ] Meet the requested 3–5 minute duration, or obtain explicit
-      instructor acceptance of the 13-minute version.
+- [x] Obtain instructor acceptance of the 13-minute demonstration.
 - [x] Upload the video as a GitHub Release asset.
-- [x] Add the actual GitHub Release link to this report.
+- [x] Add the GitHub Release link to this report.
 - [x] Verify that the video can be downloaded while signed out.
 - [x] Attach the ZIP containing the video to the course chat.
 - [x] Post the GitHub video link, sprint review, retrospective
       and reading takeaways in the course chat.
-- [ ] Record the actual submission date and the course-chat
-      message link, if available.
-- [ ] Commit and push the final documentation updates.
-- [ ] Add completion evidence to S1-08.
-- [ ] Review the acceptance criteria and update the board
-      to reflect the actual completion status.
+- [x] Record the actual submission date.
+- [x] Add completion evidence to S1-08.
+- [x] Review the acceptance criteria and update the board.
+- [ ] Commit and push this final revised report.
 
 GitHub video link:
 https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo
 
-Video duration: 13 minutes.
+Video duration: 13 minutes, accepted by the instructor.
 Planned submission deadline: October 17, 2026, in the evening.
 Actual submission date: October 18, 2026.
-Course-chat message link: Pending, if available.
+Course-chat message link: Not recorded.
