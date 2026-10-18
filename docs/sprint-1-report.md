@@ -222,13 +222,25 @@ Do not treat all remaining product features as committed work.
 
 ## 11. Remaining submission checklist
 
-- [ ] Record a 3–5 minute demonstration in English.
-- [ ] Upload the video and check access to the link.
-- [ ] Replace the pending demo entry with the real URL.
-- [ ] Review documentation for outdated sprint-status statements.
-- [ ] Commit and push the final notes and report.
-- [ ] Submit the demo, retrospective and reading takeaways
-      in the course chat by Saturday evening, October 17.
-- [ ] Add completion evidence to S1-08 and update its status
-      only after its acceptance criteria are met.
-- [ ] Review the board at sprint closure.
+## 11. Submission checklist
+
+- [x] Record the demonstration: 13 minutes.
+- [ ] Meet the requested 3–5 minute duration, or obtain explicit
+      instructor acceptance of the 13-minute version.
+- [ ] Upload the video as a GitHub Release asset.
+- [ ] Add the actual GitHub Release link to this report.
+- [ ] Verify that the video can be downloaded while signed out.
+- [ ] Attach the ZIP containing the video to the course chat.
+- [ ] Post the GitHub video link, sprint review, retrospective
+      and reading takeaways in the course chat.
+- [ ] Record the actual submission date and the course-chat
+      message link, if available.
+- [ ] Commit and push the final documentation updates.
+- [ ] Add completion evidence to S1-08.
+- [ ] Review the acceptance criteria and update the board
+      to reflect the actual completion status.
+
+Planned submission deadline: October 17, 2026, in the evening.
+Actual submission date: Pending.
+GitHub video link: Pending upload.
+Course-chat message link: Pending, if available.
