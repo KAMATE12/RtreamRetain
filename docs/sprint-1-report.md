@@ -31,9 +31,10 @@ and submission of the review, retrospective and reading takeaways.
 - Board: https://github.com/users/KAMATE12/projects/3
 - Verification history: [verification.md](verification.md)
 - Reading notes: [reading-notes.md](reading-notes.md)
-- Demo video: Recorded, 13 minutes.
-  GitHub Release upload is pending; its download link will be
-  added after publication.
+- Demo video: [Download the Sprint 1 demonstration](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo).
+  Duration: 13 minutes.
+  A ZIP copy is prepared for course-chat submission.
+  The requested 3–5 minute duration is not yet met.
   A ZIP copy is also prepared for direct course-chat submission.
   The requested 3–5 minute duration is not yet met.
 
@@ -219,17 +220,14 @@ tasks, using the proposed data model and cancellation definition.
 
 Confirm the scope during Sprint 2 planning.
 Do not treat all remaining product features as committed work.
-
-## 11. Remaining submission checklist
-
 ## 11. Submission checklist
 
 - [x] Record the demonstration: 13 minutes.
 - [ ] Meet the requested 3–5 minute duration, or obtain explicit
       instructor acceptance of the 13-minute version.
-- [ ] Upload the video as a GitHub Release asset.
-- [ ] Add the actual GitHub Release link to this report.
-- [ ] Verify that the video can be downloaded while signed out.
+- [x] Upload the video as a GitHub Release asset.
+- [x] Add the actual GitHub Release link to this report.
+- [x] Verify that the video can be downloaded while signed out.
 - [ ] Attach the ZIP containing the video to the course chat.
 - [ ] Post the GitHub video link, sprint review, retrospective
       and reading takeaways in the course chat.
@@ -239,6 +237,14 @@ Do not treat all remaining product features as committed work.
 - [ ] Add completion evidence to S1-08.
 - [ ] Review the acceptance criteria and update the board
       to reflect the actual completion status.
+
+GitHub video link:
+https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo
+
+Video duration: 13 minutes.
+Planned submission deadline: October 17, 2026, in the evening.
+Actual submission date: Pending.
+Course-chat message link: Pending, if available.
 
 Planned submission deadline: October 17, 2026, in the evening.
 Actual submission date: Pending.
