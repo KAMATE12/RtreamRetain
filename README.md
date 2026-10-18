@@ -29,7 +29,11 @@ Database availability, unavailability and recovery were checked
 during S1-06. The interface displays connection status, not
 customer statistics.
 
-S1-01 through S1-06 are complete. S1-07 is in progress.
+S1-01 through S1-07 are complete.
+S1-08 is in progress: reading notes and the sprint report are
+prepared, and a 13-minute demo has been recorded.
+Course-chat submission is pending. The demo exceeds the requested
+3–5 minutes; a shorter version or instructor acceptance is pending.
 Customer data import, analytics and retention-action management
 remain future work.
 

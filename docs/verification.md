@@ -61,7 +61,7 @@ Updating those action versions remains a maintenance item.
 CI results complement the local integration checks.
 They do not, by themselves, prove real PostgreSQL connectivity.
 
-## 3. S1-07 verification — in progress
+## 3. S1-07 verification — completed
 
 The README was updated to describe the verified local application,
 current dependencies, database port and existing evidence.
@@ -126,7 +126,8 @@ startup commands and manual verification scenarios.
 .env.example provides example values without real credentials.
 
 Known limitations and maintenance items are recorded below.
-Publication and final issue closure are still pending.
+The documentation was committed and pushed in commit db027f8.
+S1-07 was subsequently closed and moved to Done.
 
 ## 4. Current scope and limitations
 
