@@ -62,23 +62,31 @@ command. A user-facing import interface can be planned separately.
 
 ## 4. Task identification and board rules
 
-E2 is the parent epic:
-https://github.com/KAMATE12/RtreamRetain/issues/10
+Parent epic:
+[E2 — Synthetic customer data](https://github.com/KAMATE12/RtreamRetain/issues/10)
 
-Create separate task issues for E2-01, E2-02 and E2-03.
-Add their actual issue links after creation.
+Sprint 2 task issues:
 
-Create a separate Sprint 2 review task for documentation,
-reading takeaways, demonstration and retrospective.
+| Planning ID | Task | GitHub issue |
+|---|---|---|
+| E2-01 | Reproducible synthetic data generator | [#14](https://github.com/KAMATE12/RtreamRetain/issues/14) |
+| E2-02 | CSV validation | [#15](https://github.com/KAMATE12/RtreamRetain/issues/15) |
+| E2-03 | PostgreSQL import | [#16](https://github.com/KAMATE12/RtreamRetain/issues/16) |
+| S2-04 | Reading, demonstration and sprint review | [#17](https://github.com/KAMATE12/RtreamRetain/issues/17) |
 
 Planning identifiers are not GitHub issue numbers.
 
-Assign task issues to Sprint 2.
+Assign these four task issues to Sprint 2 with priority P0.
+Their initial status is Todo.
+
 Keep the Sprint field on the E2 epic empty.
+S2-04 is a sprint-level task, not an E2 implementation task.
 
 Use Todo, In Progress, Testing and Done.
 Keep at most two tasks across In Progress and Testing,
 with one implementation task actively worked on at a time.
+
+Creating an issue does not mean its functionality is implemented.
 
 ## 5. E2-01 — Reproducible synthetic data generator
 

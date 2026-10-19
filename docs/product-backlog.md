@@ -128,15 +128,17 @@ Priority: P0. Planned delivery: Sprint 2.
 Value: Provide reproducible, validated educational records for analysis.
 
 Planned tasks:
-- E2-01 — Specify and implement a reproducible synthetic data generator with documented rules and a fixed random seed.
-- E2-02 — Implement CSV schema and value validation with clear error messages.
-- E2-03 — Store valid customer-month records and test duplicate handling.
+
+- [E2-01 — Reproducible synthetic data generator](https://github.com/KAMATE12/RtreamRetain/issues/14)
+- [E2-02 — CSV validation](https://github.com/KAMATE12/RtreamRetain/issues/15)
+- [E2-03 — PostgreSQL import and duplicate handling](https://github.com/KAMATE12/RtreamRetain/issues/16)
 
 ### E3 — Customer analysis dashboard
 
 Epic issue: [#11](https://github.com/KAMATE12/RtreamRetain/issues/11)
 
-Priority: P0. Planned delivery: Sprints 2–3.
+Priority: P0. Tentative delivery: Sprint 3, subject to replanning.
+E3 is outside the current Sprint 2 commitment.
 
 Value: Make cancellation patterns and differences between customer groups visible.
 
@@ -183,15 +185,29 @@ Planned tasks:
 
 Project board: [StreamRetain — Semester Project](https://github.com/users/KAMATE12/projects/3).
 
-- Sprint 1 runs from October 5 to October 18, 2026.
+- Sprint 1 ran from October 5 to October 18, 2026.
 - The Sprint 1 task set consists of S1-01 to S1-08.
-- Future work under E2–E5 must remain outside Sprint 1.
+- Work under E2–E5 remains outside Sprint 1.
+- Sprint 2 is planned for October 19–November 1, 2026.
+- Its task set consists of E2-01, E2-02, E2-03 and S2-04.
 - Epic issues group work; they are not additional implementation tasks.
-- Keep the Sprint field on epic summary issues empty to avoid counting the same work twice. Their planned delivery is documented above.
-- E2-01 to E5-04 are planning identifiers, not GitHub issue numbers. These tasks are currently described within their epics.
-- Create separate task issues when refining future sprint work, then add their links here.
-- Close an epic only when its required tasks meet their acceptance criteria and completion evidence has been reviewed.
-- Creating an issue or writing a plan does not mean the planned functionality is implemented.
+- Keep the Sprint field on epic summary issues empty to avoid
+  counting the same work twice.
+- Planning identifiers such as E2-01 are not GitHub issue numbers.
+- E2-01 through E2-03 have separate task issues linked above.
+- [S2-04 — Reading and sprint review](https://github.com/KAMATE12/RtreamRetain/issues/17)
+  is a sprint-level task, not an E2 implementation task.
+- Future tasks under E3–E5 remain described within their epics
+  until they are refined into separate issues.
+- Create separate task issues when refining future sprint work,
+  then add their links here.
+- Close an epic only when its required tasks meet their acceptance
+  criteria and completion evidence has been reviewed.
+- Creating an issue or writing a plan does not mean the planned
+  functionality is implemented.
+
+See the [Sprint 2 plan](sprint-2-plan.md) for the current scope,
+capacity, acceptance criteria and learning activities.
 
 ## Scope boundaries
 
@@ -208,5 +224,7 @@ The following are excluded:
 Machine learning is an optional future learning extension after the MVP.
 
 Public application hosting is not assumed to be complete. Delivery documentation must explain how the application can actually be accessed.
-
-See [Data design](data-design.md) for the proposed data model and cancellation definition, and [Sprint 1 plan](sprint-1-plan.md) for the initial sprint plan.
+See [Data design](data-design.md) for the proposed data model
+and cancellation definition, [Sprint 1 plan](sprint-1-plan.md)
+for the initial foundation work, and
+[Sprint 2 plan](sprint-2-plan.md) for the current data-work plan.
