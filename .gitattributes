@@ -1,0 +1,2 @@
+# Keep CSV line endings reproducible across operating systems.
+*.csv text eol=lf
