@@ -36,7 +36,8 @@ tested and published. A 100-observation example CSV is included.
 E2-02: CSV validation is implemented and locally verified.
 It checks file structure, field values and duplicate customer-month
 pairs. Any detected error rejects the entire file.
-Publication and final issue closure are still pending.
+Implementation and documentation are published.
+GitHub Actions passed for commit 25da04a, and issue #15 is complete.
 
 E2-03: PostgreSQL import, database duplicate handling and persistence
 verification remain to be implemented.

@@ -4,8 +4,15 @@
 
 Validate synthetic customer-month CSV files before PostgreSQL import.
 
-Implementation and local verification are complete.
-Documentation publication and issue closure remain pending.
+Implementation, local verification and documentation publication are complete.
+Issue #15 is closed as completed.
+
+Implementation commit: [25da04a](https://github.com/KAMATE12/RtreamRetain/commit/25da04a).
+GitHub Actions: [successful backend and frontend jobs](https://github.com/KAMATE12/RtreamRetain/actions/runs/40623664840).
+
+The CI run completed successfully in 24 seconds.
+Action runtime deprecation warnings remain a maintenance item.
+PostgreSQL import remains outside E2-02 and belongs to E2-03.
 
 Task: [E2-02 — CSV validation](https://github.com/KAMATE12/RtreamRetain/issues/15).
 
