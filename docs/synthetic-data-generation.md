@@ -4,9 +4,11 @@
 
 Implementation and generation rules for E2-01, issue #14.
 
-The Python generator and command-line interface are implemented
-and locally verified. Commit, publication and issue closure
-remain pending.
+The Python generator and command-line interface are implemented,
+locally verified and published.
+
+Implementation commit: [45bdc6f](https://github.com/KAMATE12/RtreamRetain/commit/45bdc6f).
+Task and completion evidence: [E2-01, issue #14](https://github.com/KAMATE12/RtreamRetain/issues/14).
 
 Provide a small, reproducible fictional dataset for testing
 CSV validation, PostgreSQL import and later analysis.
@@ -43,7 +45,8 @@ Generation must not depend on the current date.
 September 2026 is a completed month before Sprint 2 begins.
 Examples and demonstrations must use fully observed months.
 
-The customer count, observation month and seed will be configurable.
+The customer count, observation month and seed are configurable
+through command-line options.
 
 ## CSV format
 
@@ -143,7 +146,8 @@ Files generated with different seeds may therefore contain
 conflicting observations for the same customer-month keys.
 They must not be treated as automatically mergeable datasets.
 
-## Planned verification
+
+## Verification checklist
 
 - Two runs with identical settings produce identical file content.
 - The output contains the requested number of records.
@@ -251,5 +255,12 @@ These checks verify the generator. They do not demonstrate
 CSV input validation or PostgreSQL import, which belong
 to E2-02 and E2-03.
 
-Implementation and observed test results will be linked
-after development.
+## Implementation and related work
+
+- [Generator implementation](../backend/app/synthetic_data.py)
+- [Generator tests](../backend/tests/test_synthetic_data.py)
+- [Published example CSV](../data/synthetic_customer_month_2026-09.csv)
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/45bdc6f)
+- [CSV validation — E2-02](csv-validation.md)
+
+PostgreSQL import remains the responsibility of E2-03.

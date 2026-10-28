@@ -11,36 +11,43 @@ Help retention managers explore cancellation patterns and organise proposed rete
 
 ## Current sprint
 
-**Sprint 1 — Product and foundation | October 5–18, 2026**
+**Sprint 2 — Reproducible synthetic data and validated import | October 19–November 1, 2026**
 
-**Goal:** Establish the product backlog and development environment, and demonstrate an Angular application connected to a FastAPI backend and PostgreSQL database.
+**Goal:** Generate reproducible synthetic customer-month data, validate CSV files and store valid records in PostgreSQL without duplicates.
 
-**Board:** [Sprint planning and task tracking](https://github.com/users/KAMATE12/projects/3).  
-**Sprint plan:** [Tasks and acceptance criteria](docs/sprint-1-plan.md)  
-**Product backlog:** [Prioritised epics and tasks](docs/product-backlog.md)
+**Board:** [Sprint planning and task tracking](https://github.com/users/KAMATE12/projects/3).
+**Sprint plan:** [Sprint 2 tasks and acceptance criteria](docs/sprint-2-plan.md).
+**Product backlog:** [Prioritised epics and tasks](docs/product-backlog.md).
 
 ## Current status
+
+Sprint 1 is complete. The review, retrospective, reading takeaways
+and demonstration were submitted to the course chat on October 18, 2026.
+The instructor accepted the 13-minute demonstration.
 
 The local application skeleton has been verified on Windows.
 Angular communicates with FastAPI, and FastAPI executes a real
 PostgreSQL query through the readiness endpoint.
+Database availability, unavailability and recovery were checked.
 
-Database availability, unavailability and recovery were checked
-during S1-06. The interface displays connection status, not
-customer statistics.
+E2-01: the reproducible synthetic data generator is implemented,
+tested and published. A 100-observation example CSV is included.
 
-S1-01 through S1-07 are complete.
-The S1-08 review, retrospective, reading takeaways and demo
-were submitted to the course chat on October 18, 2026.
-The 13-minute demo exceeds the requested 3–5 minutes;
-a shorter version or instructor acceptance remains pending.
-Customer data import, analytics and retention-action management
-remain future work.
+E2-02: CSV validation is implemented and locally verified.
+It checks file structure, field values and duplicate customer-month
+pairs. Any detected error rejects the entire file.
+Publication and final issue closure are still pending.
+
+E2-03: PostgreSQL import, database duplicate handling and persistence
+verification remain to be implemented.
+
+The Angular interface still displays connection status only.
+Customer analytics and retention-action management remain future work.
 
 ## Stack and structure
 
 - `frontend/`: Angular 21 and TypeScript; a connection-checking page.
-- `backend/`: Python and FastAPI; health and database readiness endpoints.
+- `backend/`: Python and FastAPI; health and readiness endpoints, a synthetic data generator and a CSV validation command.
 - `compose.yaml`: local PostgreSQL 17 service.
 - `docs/`: sprint plan, backlog, data design, reading notes and demo checklist.
 - `.github/workflows/checks.yml`: automated backend tests and frontend build.
@@ -98,20 +105,49 @@ cd ../frontend
 npm run build
 ```
 
-These automated backend tests mock PostgreSQL. Confirm the real database connection separately in the UI and `/api/readiness`. There are no browser tests yet; they belong to the feature implementation work.
+The API tests mock PostgreSQL. Generator and CSV validation tests
+exercise data generation, file handling and validation without a database.
+Confirm real PostgreSQL connectivity separately through the UI
+and `/api/readiness`.
+
+Latest local backend result on October 28, 2026:
+111 tests passed, with one Starlette TestClient deprecation warning.
+See [CSV validation and verification details](docs/csv-validation.md).
+
+There are no automated browser tests yet.
 
 ## Data design and evidence
 
 See the [proposed data model and cancellation definition](docs/data-design.md).
 
-No customer tables or customer datasets have been implemented yet.
+A reproducible synthetic CSV dataset is available.
+No customer tables or database import have been implemented yet.
 The PostgreSQL service and real connectivity check are operational.
 
-See the [S1-06 verification report](docs/S1-06-postgresql-data-model.md)
-and [issue #6 with completion evidence](https://github.com/KAMATE12/RtreamRetain/issues/6).
+- [Synthetic data generation rules and usage](docs/synthetic-data-generation.md)
+- [Example CSV: 100 customer-month observations](data/synthetic_customer_month_2026-09.csv)
+- [CSV validation rules, usage and test results](docs/csv-validation.md)
+- [S1-06 PostgreSQL verification report](docs/S1-06-postgresql-data-model.md)
+
+To validate the example, run from the repository root:
+
+```powershell
+cd backend
+..\.venv\Scripts\python.exe -m app.csv_validation ../data/synthetic_customer_month_2026-09.csv
+```
+
+Validation does not write records to PostgreSQL.
+All customer data is synthetic and does not establish real IVI behaviour.
 
 Local development only; public application deployment remains future work.
 
 ## Sprint reports
 
-[Sprint 1 report template](docs/sprint-1-report.md). Post the demo, retrospective, and reading takeaways by Saturday evening, October 17. Review the board on Sunday, October 18. The final semester demo link will be added here in Sprint 5.
+- [Sprint 1 completed review and retrospective](docs/sprint-1-report.md)
+- [Sprint 1 demonstration — GitHub Release](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-1-demo)
+- [Sprint 2 plan](docs/sprint-2-plan.md)
+
+The Sprint 1 submission was posted on October 18, 2026.
+The instructor accepted the 13-minute demonstration.
+
+The final semester demonstration remains planned for Sprint 5.
