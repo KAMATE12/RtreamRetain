@@ -47,7 +47,9 @@ The complete backend suite passed 134 tests with PostgreSQL
 integration enabled. Persistence after stopping and restarting
 PostgreSQL was verified.
 
-Documentation publication and final issue closure remain pending.
+Implementation and documentation are published.
+GitHub Actions passed for commit 4132977.
+Issue #16 is closed as completed.
 
 The Angular interface still displays connection status only.
 Customer analytics and retention-action management remain future work.

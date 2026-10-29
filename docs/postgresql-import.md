@@ -2,8 +2,8 @@
 
 ## Status and purpose
 
-Implementation and local automated verification are complete.
-Documentation, publication and final issue closure are in progress.
+Implementation, local verification and documentation publication
+are complete. Issue #16 is closed as completed.
 
 Task: [E2-03 — PostgreSQL import](https://github.com/KAMATE12/RtreamRetain/issues/16).
 
@@ -264,6 +264,14 @@ Test fixtures do not erase the project's working tables.
 
 ## Publication evidence
 
-Implementation commit: pending.
-GitHub Actions result for the implementation: pending.
-Issue completion evidence and final closure: pending.
+- [Implementation commit: 4132977](https://github.com/KAMATE12/RtreamRetain/commit/4132977)
+- [Successful GitHub Actions run](https://github.com/KAMATE12/RtreamRetain/actions/runs/40802569986)
+- [Completed issue #16 and evidence](https://github.com/KAMATE12/RtreamRetain/issues/16)
+
+The backend and frontend CI jobs succeeded in a run lasting
+27 seconds. Action runtime deprecation warnings remain a
+maintenance item.
+
+The complete local suite passed 134 tests with PostgreSQL
+integration enabled. The CI summary does not establish that
+those database integration tests ran on GitHub.
