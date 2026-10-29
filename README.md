@@ -39,8 +39,15 @@ pairs. Any detected error rejects the entire file.
 Implementation and documentation are published.
 GitHub Actions passed for commit 25da04a, and issue #15 is complete.
 
-E2-03: PostgreSQL import, database duplicate handling and persistence
-verification remain to be implemented.
+E2-03: PostgreSQL tables and transactional CSV import are implemented
+and locally verified. Identical observations are left unchanged;
+conflicting observations reject the entire import.
+
+The complete backend suite passed 134 tests with PostgreSQL
+integration enabled. Persistence after stopping and restarting
+PostgreSQL was verified.
+
+Documentation publication and final issue closure remain pending.
 
 The Angular interface still displays connection status only.
 Customer analytics and retention-action management remain future work.
@@ -95,35 +102,89 @@ Open http://localhost:4200 and click **Check connections**. API documentation: h
 
 ## Verify
 
-See the [verification history, results and limitations](docs/verification.md).
+See the [verification history](docs/verification.md) and
+[PostgreSQL import verification](docs/postgresql-import.md).
 
-In a third terminal at the root:
+### Tests without PostgreSQL integration
+
+From the repository root, in Windows PowerShell:
 
 ```powershell
-cd backend
-..\.venv\Scripts\python.exe -m pytest
-cd ../frontend
-npm run build
+Set-Location backend
+Remove-Item Env:\STREAMRETAIN_DB_TESTS -ErrorAction SilentlyContinue
+..\.venv\Scripts\python.exe -m pytest -v
 ```
 
-The API tests mock PostgreSQL. Generator and CSV validation tests
-exercise data generation, file handling and validation without a database.
-Confirm real PostgreSQL connectivity separately through the UI
-and `/api/readiness`.
+The API tests mock PostgreSQL. Generator, CSV-validation and
+import-command unit tests run without a real database.
 
-Latest local backend result on October 28, 2026:
-111 tests passed, with one Starlette TestClient deprecation warning.
-See [CSV validation and verification details](docs/csv-validation.md).
+The 21 PostgreSQL integration tests are skipped in this mode.
+Skipped tests do not verify database behavior.
 
+### Complete backend suite with PostgreSQL
+
+Start Docker Desktop, then run from the repository root:
+
+```powershell
+docker compose up -d db
+docker compose ps
+```
+
+Wait until PostgreSQL is healthy. The local `.env` must contain
+the correct database configuration.
+
+From the repository root:
+
+```powershell
+Set-Location backend
+$env:STREAMRETAIN_DB_TESTS = "1"
+
+try {
+    ..\.venv\Scripts\python.exe -m pytest -v
+}
+finally {
+    Remove-Item Env:\STREAMRETAIN_DB_TESTS -ErrorAction SilentlyContinue
+}
+```
+
+Integration tests use isolated PostgreSQL schemas.
+Their cleanup does not delete the project's working tables.
+
+Latest complete local backend result — October 29, 2026:
+134 passed, 1 warning in 6.63 seconds.
+
+The warning concerns deprecated httpx usage in Starlette TestClient.
+It remains a maintenance item.
+
+### Frontend build and manual checks
+
+From the repository root:
+
+```powershell
+npm.cmd --prefix frontend run build
+```
+
+The build verifies compilation, not browser behavior.
+Check the Angular connection button and `/api/readiness` separately.
 There are no automated browser tests yet.
+
+A successful GitHub Actions run proves only the checks actually
+enabled in that workflow. PostgreSQL integration requires a
+provisioned database and STREAMRETAIN_DB_TESTS=1.
 
 ## Data design and evidence
 
-See the [proposed data model and cancellation definition](docs/data-design.md).
+See the [data model and cancellation definition](docs/data-design.md).
 
 A reproducible synthetic CSV dataset is available.
-No customer tables or database import have been implemented yet.
-The PostgreSQL service and real connectivity check are operational.
+The customer and customer_month tables are implemented.
+The example dataset has been imported into local PostgreSQL:
+100 customers and 100 monthly observations.
+
+The command-line importer validates the complete file before
+database access and uses one transaction per import.
+
+See the [PostgreSQL import guide and verification results](docs/postgresql-import.md).
 
 - [Synthetic data generation rules and usage](docs/synthetic-data-generation.md)
 - [Example CSV: 100 customer-month observations](data/synthetic_customer_month_2026-09.csv)

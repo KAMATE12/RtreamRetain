@@ -1,12 +1,21 @@
-# Proposed data design
+# Data design and cancellation definition
 
-Design proposal for later implementation. No customer tables are created in Sprint 1.
+The customer and customer_month tables were implemented during
+Sprint 2, task E2-03, together with transactional CSV import.
+
+No customer tables were created during Sprint 1.
+The original design proposal became the basis for this implementation.
+
+Retention actions remain a proposal for future implementation.
+
+See [PostgreSQL import and verification](postgresql-import.md)
+for commands, database constraints, storage limits and test results.
 
 ## One row and one time window
 
 Use one row per synthetic customer per calendar month, with a unique pair (customer_id, observation_month). The initial dataset will represent a cohort of customers active at the start of that month. A customer who cancels during that month is counted once. New mid-month customers are outside this initial cohort definition.
 
-## Proposed customer_month fields
+## Implemented customer_month fields
 
 | Field | Meaning | Rule |
 |---|---|---|
@@ -31,15 +40,15 @@ Lower viewing may be associated with cancellation; it does not establish the cau
 
 id, segment_description, proposed_action, rationale, status, created_at. Initial statuses: Proposed, In Progress, Completed. Marking an action Completed describes the workflow; it does not prove that retention improved.
 
-## Proposed entities, identifiers and relationships
+## Entities, identifiers and relationships
 
-This is a design proposal for future implementation.
-No customer tables are created in Sprint 1.
+Customer and customer_month are implemented in PostgreSQL.
+The retention_action entity remains a proposal.
 
 ### Customer
 
 A customer represents a fictional subscriber.
-The proposed primary key is customer_id: a required synthetic
+The implemented primary key is customer_id: a required synthetic
 identifier that remains stable across observation months.
 
 No real names, email addresses or other personal identifiers
@@ -50,10 +59,10 @@ are required.
 A customer_month record describes one eligible customer during
 one calendar month.
 
-The proposed composite primary key is:
+The implemented composite primary key is:
 (customer_id, observation_month).
 
-customer_id references the proposed Customer entity.
+customer_id references customer.customer_id through a foreign key.
 One customer can have many monthly observations.
 Each monthly observation belongs to exactly one customer.
 
@@ -129,8 +138,8 @@ This is an illustrative example, not an observed project result.
 
 ### Synthetic data scope
 
-All future customer records will be artificially generated
-for this educational project.
+The current customer records are artificially generated
+for this educational project. Future datasets must remain synthetic.
 
 They are not real IVI customer records. Patterns in these data
 reflect generation assumptions and cannot establish actual
@@ -138,8 +147,21 @@ cancellation causes or retention effectiveness at IVI.
 
 ## Additional field definitions and validation rules
 
-These rules are proposed for future implementation.
-They are not yet enforced by database tables or import code.
+Monthly observation validation is implemented in the CSV validator.
+PostgreSQL additionally enforces required values, primary and foreign
+keys, allowed plans, first-day dates and non-negative numeric values.
+Special numeric values such as NaN and Infinity are rejected.
+
+The CSV validator enforces the canonical synthetic customer ID format.
+The database customer ID constraint only checks that the value is
+non-empty after trimming ordinary spaces.
+
+Database storage limits also apply; see the PostgreSQL import guide.
+
+Cohort eligibility, fully observed months and cross-month subscription
+history remain dataset assumptions rather than database guarantees.
+
+Retention-action rules below remain proposed and are not implemented.
 
 ### Monthly observations
 
@@ -147,7 +169,7 @@ All fields listed in customer_month are required in the initial
 dataset. Reject missing values rather than silently replacing
 them with zero or false.
 
-| Field | Proposed definition and validation |
+| Field | Definition and validation |
 |---|---|
 | customer_id | Non-empty synthetic identifier referencing an existing customer. |
 | observation_month | Valid date representing the first day of the observed month. |
@@ -166,7 +188,17 @@ Monthly activity totals cover the observation window, including
 activity after a cancellation request if access remains active.
 
 The pair (customer_id, observation_month) must be unique.
-Duplicate observations must be reported rather than counted twice.
+
+Repeated pairs inside one CSV file cause whole-file validation failure.
+
+When importing a valid file into PostgreSQL:
+- A new pair is inserted.
+- An existing pair with identical validated values is counted as unchanged.
+- An existing pair with different values causes a conflict and rolls back
+  the entire import.
+
+Missing customer identities are created within the same transaction.
+Existing observations are never silently overwritten.
 
 ### Retention actions
 

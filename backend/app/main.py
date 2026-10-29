@@ -1,36 +1,40 @@
-"""Sprint 1: API availability and database connectivity only."""
-import os
-from functools import lru_cache
-from pathlib import Path
+"""API health and PostgreSQL readiness endpoints."""
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+from app.database import get_engine
+
+
 app = FastAPI(title="StreamRetain API", version="0.1.0")
-
-
-@lru_cache
-def get_engine():
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        raise ValueError("DATABASE_URL is missing")
-    return create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 3})
 
 
 @app.get("/api/health")
 def health():
-    """A live Python process is not proof that PostgreSQL is available."""
+    """Report API availability independently of PostgreSQL."""
+
+    # EN: This endpoint does not query the database.
+    # FR: Cette route n'interroge pas la base de données.
     return {"status": "ok", "service": "streamretain-api"}
 
 
 @app.get("/api/readiness")
 def readiness():
+    """Check whether PostgreSQL accepts a real query."""
+
     try:
+        # EN: Release the connection automatically after the query.
+        # FR: Libérer automatiquement la connexion après la requête.
         with get_engine().connect() as connection:
             connection.execute(text("SELECT 1"))
+
     except (ValueError, SQLAlchemyError):
-        raise HTTPException(status_code=503, detail="Database is not ready") from None
+        # EN: Return a generic error without exposing credentials.
+        # FR: Renvoyer une erreur générique sans exposer les identifiants.
+        raise HTTPException(
+            status_code=503,
+            detail="Database is not ready",
+        ) from None
+
     return {"status": "ready", "database": "connected"}

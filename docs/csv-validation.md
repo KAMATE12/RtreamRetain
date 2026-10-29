@@ -83,7 +83,13 @@ Leading zeros are accepted: 007 becomes integer 7.
 
 The generator's upper bounds are not general validation limits.
 Python conversion limits still apply to exceptionally long inputs.
-Database storage limits must be defined and checked during E2-03.
+PostgreSQL storage limits are documented in
+[the import guide](postgresql-import.md).
+
+The INTEGER columns used by the importer accept non-negative values
+up to 2147483647. CSV validation does not enforce this upper bound.
+Larger values can pass CSV validation but fail during database import,
+causing the entire import transaction to roll back.
 
 ### Viewing hours
 
