@@ -239,41 +239,67 @@ Use the buffer where necessary and report scope changes honestly.
 
 ## 10. Learning and reading
 
-Continue studying relevant concepts from Dan Olsen's
-The Lean Product Playbook using legally accessible publisher
-excerpts and official author resources.
+The professor's course schedule assigns Robert C. Martin's
+Clean Code to Sprint 2.
 
-Focus on:
+The initial plan continued with Dan Olsen's The Lean Product
+Playbook. This mismatch was identified during the sprint review
+preparation and corrected.
 
-- Connecting data requirements to the target user's needs.
-- Limiting the first implementation to a useful, testable scope.
-- Making product and synthetic-data assumptions explicit.
-- Preparing prototypes and questions for future user feedback.
-- Working in small increments and recording what was learned.
+### Main reading: Clean Code
 
-Study a relevant concept before the implementation decision
-it informs, then record the application after the work.
+Study relevant, legally accessible material about code clarity,
+organization and maintainability.
 
-Create docs/sprint-2-reading-notes.md during the sprint.
-For each reading session, record:
+The official First Principles excerpt from the second edition
+was read; completion was recorded on October 30, 2026:
 
-- The actual source and section studied.
-- The main idea in the student's own words.
-- Its concrete application to StreamRetain.
-- Remaining uncertainties and the next learning step.
+https://www.informit.com/articles/article.aspx?p=3222335
 
-Explanations will be discussed in French.
-Repository reading notes will be written in English.
+The accompanying guided discussion focused on:
 
-Distinguish software verification from product validation.
-Passing data tests does not prove that the product meets
-real retention managers' needs.
+- Meaningful names.
+- Clear function responsibilities.
+- Useful and accurate comments.
+- Understandable error handling.
+- Readable tests.
 
-Do not claim to have read full chapters when only an excerpt
-or an author presentation was studied.
+Apply these ideas to the synthetic generator, CSV validator
+and transactional PostgreSQL importer.
 
-Confirm any additional assigned Sprint 2 reading against
-the professor's semester plan.
+Distinguish the excerpt actually read from guided explanations
+and project exercises. Do not claim complete-book reading.
+
+### Supplementary product learning
+
+The public Dan Olsen resources studied during this sprint
+remain supplementary learning.
+
+Use them to explain the relationship between user needs,
+limited implementation scope and unvalidated assumptions.
+
+Technical verification does not establish that the product
+meets real retention managers' needs.
+
+### Evidence and timing
+
+Record sources, actual reading scope, personal takeaways,
+concrete applications and remaining uncertainties in:
+
+[ Sprint 2 reading notes ](sprint-2-reading-notes.md)
+
+Explanations are discussed in French.
+Repository notes are written in English.
+
+These reading activities were documented after E2-01,
+E2-02 and E2-03 were implemented. Present their application
+as retrospective analysis and preparation for future work,
+not as evidence that reading preceded implementation.
+
+The supplied course schedule names the book but does not
+specify chapters or the required reading extent.
+Do not infer that this excerpt alone satisfies any additional
+reading requirements from the professor.
 
 ## 11. Working habits from the Sprint 1 retrospective
 
