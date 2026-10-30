@@ -42,8 +42,16 @@ Official accessible excerpt:
 First Principles, from the second edition:
 https://www.informit.com/articles/article.aspx?p=3222335
 
-The second-edition excerpt was provided as a reading resource.
-Direct reading of this excerpt has not yet been recorded.
+I read the official First Principles excerpt from the second
+edition. Reading completion was recorded on October 30, 2026.
+
+My main takeaway is that organizing code clearly helps a
+programmer understand its structure and responsibilities.
+
+In StreamRetain, separating CSV validation, database storage
+and command coordination illustrates this organization.
+
+This reading covers the accessible excerpt, not the entire book.
 
 The original and second editions have different chapter
 structures. This document does not treat their chapter
