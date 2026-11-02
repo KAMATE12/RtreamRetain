@@ -35,8 +35,10 @@ The two submitted parts last 16 minutes 01 second and
 21 minutes 32 seconds respectively.
 The instructor accepted the duration exceeding five minutes.
 
-Final repository documentation and issue closure are being
-completed. An additional GitHub Release copy remains pending.
+S2-04 is complete. Submission evidence has been recorded,
+and the issue and project board have been updated.
+
+An additional GitHub Release copy remains pending.
 
 
 ## 2. Project and evidence links
@@ -202,12 +204,14 @@ S2-04 remains in progress.
 
 The demonstration, sprint review, retrospective and reading
 takeaways were submitted to the course chat on October 31, 2026.
-S2-04 closure remains in progress while final documentation,
-submission-access evidence and the board are reviewed.
+The demonstration, sprint review, retrospective and reading
+takeaways were submitted to the course chat on October 31, 2026.
 
-GitHub Release upload attempts were unsuccessful.
-An additional release copy remains pending.
+Both submitted ZIP attachments were downloaded and extracted.
+Both videos were successfully opened and played.
 
+S2-04 is complete. The remaining distribution follow-up is
+an additional GitHub Release copy after unsuccessful uploads.
 The current workflow is command-line based.
 The Angular interface displays connection status only.
 
@@ -337,9 +341,6 @@ Select relevant accessible reading during planning.
 
 ## 12. Submission checklist
 
-
-
-
 - [x] Implement and verify the generator.
 - [x] Implement and verify CSV validation.
 - [x] Implement and verify PostgreSQL import.
@@ -351,11 +352,11 @@ Select relevant accessible reading during planning.
 - [x] Send both demonstration ZIP files to the course chat.
 - [x] Submit the sprint review, retrospective and reading takeaways.
 - [x] Record the actual submission date: October 31, 2026.
-- [ ] Verify that both submitted attachments can be downloaded and played.
-- [ ] Review and finalize this report.
-- [ ] Commit and push the finalized report.
-- [ ] Add completion evidence to S2-04.
-- [ ] Review acceptance criteria and update the board.
+- [x] Verify that both submitted attachments can be downloaded and played.
+- [x] Review and finalize this report.
+- [x] Commit and push the finalized report.
+- [x] Add completion evidence to S2-04.
+- [x] Review acceptance criteria and update the board.
 
 Additional distribution follow-up:
 
