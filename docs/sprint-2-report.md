@@ -200,10 +200,6 @@ Detailed commands, test scenarios and limitations:
 
 ## 5. Incomplete work and current limitations
 
-S2-04 remains in progress.
-
-The demonstration, sprint review, retrospective and reading
-takeaways were submitted to the course chat on October 31, 2026.
 The demonstration, sprint review, retrospective and reading
 takeaways were submitted to the course chat on October 31, 2026.
 
@@ -212,6 +208,7 @@ Both videos were successfully opened and played.
 
 S2-04 is complete. The remaining distribution follow-up is
 an additional GitHub Release copy after unsuccessful uploads.
+
 The current workflow is command-line based.
 The Angular interface displays connection status only.
 
