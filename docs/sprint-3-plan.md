@@ -274,8 +274,24 @@ with one implementation task actively worked on at a time.
 Assign Sprint 3 to task issues.
 Keep the Sprint field on the parent epic empty.
 
-Task issue links will be added after creation.
+### Sprint 3 task issues
+
+| Planning ID | Task | GitHub issue |
+|---|---|---|
+| E3-01 | Monthly indicators and API | [#18](https://github.com/KAMATE12/RtreamRetain/issues/18) |
+| E3-02 | Angular indicators and interface states | [#19](https://github.com/KAMATE12/RtreamRetain/issues/19) |
+| E3-03 | Month and subscription-plan filters | [#20](https://github.com/KAMATE12/RtreamRetain/issues/20) |
+| E3-04 | Subscription-plan comparisons | [#21](https://github.com/KAMATE12/RtreamRetain/issues/21) |
+| S3-05 | Reading, verification and sprint review | [#22](https://github.com/KAMATE12/RtreamRetain/issues/22) |
+
+Assign these five task issues to Sprint 3 with priority P0.
+Their initial status is Todo.
+
+S3-05 is a sprint-level task, not an E3 implementation task.
+Keep the Sprint field on the E3 epic empty.
+
 Planning identifiers are not GitHub issue numbers.
+Creating an issue does not mean its functionality is implemented.
 
 ## 12. Proposed schedule
 
