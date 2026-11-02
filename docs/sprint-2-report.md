@@ -337,11 +337,8 @@ Select relevant accessible reading during planning.
 
 ## 12. Submission checklist
 
-## 12. Submission checklist
 
-## 12. Submission checklist
 
-## 12. Submission checklist
 
 - [x] Implement and verify the generator.
 - [x] Implement and verify CSV validation.
