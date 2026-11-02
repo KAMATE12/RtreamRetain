@@ -7,7 +7,13 @@ Project: StreamRetain
 Sprint: October 19–November 1, 2026
 Report prepared: October 30, 2026
 
-Status: Draft — demonstration and course-chat submission pending.
+Status: Submitted to the course chat on October 31, 2026.
+
+The sprint review, retrospective, reading takeaways and both
+demonstration ZIP files were sent.
+
+The instructor accepted the demonstration duration exceeding
+five minutes. An additional GitHub Release copy remains pending.
 
 ## 1. Sprint goal and outcome
 
@@ -20,9 +26,18 @@ The technical goal has been achieved and locally verified.
 The delivered workflow is command-line based:
 generate a dataset, validate it and import it into PostgreSQL.
 
-Sprint delivery is not yet complete. The English demonstration
-has not been recorded, and the review package has not yet
-been submitted to the course chat.
+The technical work and course-chat submission are complete.
+The demonstration and review package were submitted on
+October 31, 2026.
+
+The original recording lasts 37 minutes and 34 seconds.
+The two submitted parts last 16 minutes 01 second and
+21 minutes 32 seconds respectively.
+The instructor accepted the duration exceeding five minutes.
+
+Final repository documentation and issue closure are being
+completed. An additional GitHub Release copy remains pending.
+
 
 ## 2. Project and evidence links
 
@@ -34,8 +49,15 @@ been submitted to the course chat.
 - [CSV validation](csv-validation.md)
 - [PostgreSQL import](postgresql-import.md)
 
-Demonstration link: Pending recording and publication.
-Demonstration duration: Not yet available.
+Demonstration delivery: Two ZIP files sent to the course chat.
+
+- StreamRetain_Sprint2_Demo1.zip: 16 minutes 01 second.
+- StreamRetain_Sprint2_Demo2.zip: 21 minutes 32 seconds.
+
+The instructor accepted the duration exceeding five minutes.
+
+GitHub Release publication remains pending after unsuccessful
+upload attempts. The release link will be added when available.
 
 ## 3. Completed implementation
 
@@ -178,8 +200,13 @@ Detailed commands, test scenarios and limitations:
 
 S2-04 remains in progress.
 
-The English demonstration has not yet been recorded.
-The review package has not yet been submitted to the course chat.
+The demonstration, sprint review, retrospective and reading
+takeaways were submitted to the course chat on October 31, 2026.
+S2-04 closure remains in progress while final documentation,
+submission-access evidence and the board are reviewed.
+
+GitHub Release upload attempts were unsuccessful.
+An additional release copy remains pending.
 
 The current workflow is command-line based.
 The Angular interface displays connection status only.
@@ -310,27 +337,39 @@ Select relevant accessible reading during planning.
 
 ## 12. Submission checklist
 
+## 12. Submission checklist
+
+## 12. Submission checklist
+
+## 12. Submission checklist
+
 - [x] Implement and verify the generator.
 - [x] Implement and verify CSV validation.
 - [x] Implement and verify PostgreSQL import.
 - [x] Publish implementation and technical documentation.
 - [x] Record reading sources, scope and takeaways.
 - [x] Reflect on the two Sprint 1 improvements.
+- [x] Record and review the English demonstration.
+- [x] Obtain instructor acceptance of the extended duration.
+- [x] Send both demonstration ZIP files to the course chat.
+- [x] Submit the sprint review, retrospective and reading takeaways.
+- [x] Record the actual submission date: October 31, 2026.
+- [ ] Verify that both submitted attachments can be downloaded and played.
 - [ ] Review and finalize this report.
-- [ ] Prepare and rehearse an English demonstration.
-- [ ] Record the demonstration, targeting 3–5 minutes.
-- [ ] Publish the demonstration and record its actual duration.
-- [ ] Verify demonstration access.
-- [ ] Submit the demo, review, retrospective and reading takeaways.
-- [ ] Record the actual submission date and available evidence.
 - [ ] Commit and push the finalized report.
 - [ ] Add completion evidence to S2-04.
 - [ ] Review acceptance criteria and update the board.
 
-Planned submission target: October 31, 2026, in the evening,
-subject to the professor's course schedule.
+Additional distribution follow-up:
 
-Actual submission date: Not yet submitted.
-Demonstration link: Pending recording and publication.
-Demonstration duration: Not yet available.
-Course-chat message link: Not yet available.
+- [ ] Publish an additional copy on GitHub Release.
+
+Planned submission target: October 31, 2026, in the evening.
+Actual submission date: October 31, 2026.
+
+Demonstration delivery: Two ZIP attachments in the course chat.
+Part 1: StreamRetain_Sprint2_Demo1.zip — 16 minutes 01 second.
+Part 2: StreamRetain_Sprint2_Demo2.zip — 21 minutes 32 seconds.
+Duration exception: Accepted by the instructor.
+
+GitHub Release link: Pending successful upload.
