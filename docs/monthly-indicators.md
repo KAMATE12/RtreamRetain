@@ -343,5 +343,10 @@ tests ran on GitHub.
 The Starlette TestClient warning and GitHub Actions runtime
 deprecation annotations remain maintenance items.
 
-Issue completion evidence and the project board update
-remain pending.
+Completion evidence was added to issue #18.
+Its acceptance criteria were checked, the issue was closed
+as completed, and its project-board status was set to Done
+on November 6, 2026.
+
+E3-01 was checked in parent epic #11.
+The epic remains open for the remaining implementation tasks.
