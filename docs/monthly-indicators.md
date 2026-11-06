@@ -316,8 +316,32 @@ not been established by these tests.
 The Angular dashboard and selectors are separate tasks.
 This document describes the backend functionality only.
 
-Publication status at the time of writing:
+## 11. Publication and CI evidence
 
-- Implementation and documentation commit: pending.
-- Push and GitHub Actions verification: pending.
-- Issue completion evidence and board update: pending.
+Implementation and documentation were committed and pushed:
+
+[Commit 5c4b209](https://github.com/KAMATE12/RtreamRetain/commit/5c4b209)
+
+GitHub Actions completed successfully for this commit:
+
+[CI run](https://github.com/KAMATE12/RtreamRetain/actions/runs/42148255599)
+
+- Overall status: Success.
+- Total workflow duration: 22 seconds.
+- Backend job: passed, 18 seconds.
+- Frontend job: passed, 14 seconds.
+- Backend pytest result: 153 passed, 30 skipped, 1 warning in 0.91s.
+
+The 30 PostgreSQL tests were skipped in this CI run:
+3 import integration tests, 24 database-schema and indicator
+tests, and 3 indicator API integration tests.
+
+The complete local run with PostgreSQL enabled passed all
+183 tests. CI success does not imply that PostgreSQL integration
+tests ran on GitHub.
+
+The Starlette TestClient warning and GitHub Actions runtime
+deprecation annotations remain maintenance items.
+
+Issue completion evidence and the project board update
+remain pending.
