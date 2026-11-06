@@ -502,3 +502,271 @@ def test_database_error_rolls_back_entire_attempt(
 
     assert len(observations) == 1
     assert dict(observations[0]) == sample_observation
+
+
+def test_monthly_indicators_use_only_the_selected_month(db_connection):
+    from app.indicators import get_monthly_indicators
+
+    september = date(2026, 9, 1)
+    october = date(2026, 10, 1)
+
+    # EN: Create the customer identities in the isolated test schema.
+    # FR: Créer les identités clients dans le schéma de test isolé.
+    customers = [
+        {"customer_id": f"C{number:06d}"}
+        for number in range(1, 101)
+    ]
+    db_connection.execute(customer.insert(), customers)
+
+    observations = []
+
+    for number in range(1, 101):
+        cancelled = number <= 12
+
+        observations.append(
+            {
+                "customer_id": f"C{number:06d}",
+                "observation_month": september,
+                "plan": "Basic",
+                "tenure_months": 0,
+                "viewing_hours": (
+                    Decimal("10") if cancelled else Decimal("25")
+                ),
+                "payment_failures": 0,
+                "support_requests": 0,
+                "cancelled_in_month": cancelled,
+            }
+        )
+
+    # EN: This October observation must not affect September's results.
+    # FR: Cette observation d'octobre ne doit pas affecter septembre.
+    observations.append(
+        {
+            **observations[0],
+            "observation_month": october,
+            "viewing_hours": Decimal("999"),
+        }
+    )
+
+    db_connection.execute(customer_month.insert(), observations)
+
+    # EN: Read indicators for September only.
+    # FR: Lire les indicateurs de septembre uniquement.
+    result = get_monthly_indicators(
+        db_connection,
+        observation_month=september,
+    )
+
+    assert result["cohort_size"] == 100
+    assert result["cancellation_count"] == 12
+    assert result["cancellation_rate"] == pytest.approx(12.0)
+    assert result["average_viewing_hours"] == Decimal("23.2")
+
+
+def test_month_without_observations_has_no_rates(
+    db_connection,
+    sample_observation,
+):
+    from app.indicators import get_monthly_indicators
+
+    # EN: Store a September observation in the isolated schema.
+    # FR: Stocker une observation de septembre dans le schéma isolé.
+    db_connection.execute(
+        customer.insert(),
+        {"customer_id": sample_observation["customer_id"]},
+    )
+    db_connection.execute(
+        customer_month.insert(),
+        sample_observation,
+    )
+
+    # EN: October has no observations, although September has data.
+    # FR: Octobre n'a aucune observation, même si septembre en contient.
+    result = get_monthly_indicators(
+        db_connection,
+        observation_month=date(2026, 10, 1),
+    )
+
+    assert result["cohort_size"] == 0
+    assert result["cancellation_count"] == 0
+    assert result["cancellation_rate"] is None
+    assert result["average_viewing_hours"] is None
+
+
+def test_month_with_no_cancellations_has_zero_rate(
+    db_connection,
+    sample_observation,
+):
+    from app.indicators import get_monthly_indicators
+
+    # EN: This customer has viewing activity and has not cancelled.
+    # FR: Ce client a une activité de visionnage et n'a pas annulé.
+    db_connection.execute(
+        customer.insert(),
+        {"customer_id": sample_observation["customer_id"]},
+    )
+    db_connection.execute(
+        customer_month.insert(),
+        sample_observation,
+    )
+
+    result = get_monthly_indicators(
+        db_connection,
+        observation_month=sample_observation["observation_month"],
+    )
+
+    assert result["cohort_size"] == 1
+    assert result["cancellation_count"] == 0
+    assert result["cancellation_rate"] == 0.0
+    assert result["average_viewing_hours"] == Decimal("0.125")
+
+
+def test_available_months_are_unique_and_newest_first(
+    db_connection,
+    sample_observation,
+):
+    from app.indicators import get_available_observation_months
+
+    db_connection.execute(
+        customer.insert(),
+        [
+            {"customer_id": "C000001"},
+            {"customer_id": "C000002"},
+        ],
+    )
+
+    # EN: Insert months out of order, with two customers in September.
+    # FR: Insérer les mois dans le désordre, avec deux clients en septembre.
+    observations = [
+        dict(sample_observation),
+        {
+            **sample_observation,
+            "observation_month": date(2026, 8, 1),
+        },
+        {
+            **sample_observation,
+            "observation_month": date(2026, 10, 1),
+        },
+        {
+            **sample_observation,
+            "customer_id": "C000002",
+        },
+    ]
+
+    db_connection.execute(customer_month.insert(), observations)
+
+    result = get_available_observation_months(db_connection)
+
+    assert result == [
+        date(2026, 10, 1),
+        date(2026, 9, 1),
+        date(2026, 8, 1),
+    ]
+
+def test_available_months_are_empty_without_observations(db_connection):
+    from app.indicators import get_available_observation_months
+
+    # EN: Query the isolated tables without inserting any observations.
+    # FR: Interroger les tables isolées sans insérer d'observations.
+    result = get_available_observation_months(db_connection)
+
+    # EN: No stored observations means no available months.
+    # FR: Aucune observation stockée signifie aucun mois disponible.
+    assert result == []
+
+
+def test_plan_filter_applies_to_every_monthly_indicator(
+    db_connection,
+    sample_observation,
+):
+    from app.indicators import get_monthly_indicators
+
+    september = date(2026, 9, 1)
+
+    # EN: Create three customers in the isolated test schema.
+    # FR: Créer trois clients dans le schéma de test isolé.
+    db_connection.execute(
+        customer.insert(),
+        [
+            {"customer_id": "C000001"},
+            {"customer_id": "C000002"},
+            {"customer_id": "C000003"},
+        ],
+    )
+
+    # EN: Keep zero-tenure customers eligible in this synthetic cohort.
+    # FR: Conserver les clients d'ancienneté zéro dans cette cohorte synthétique.
+    basic_cancelled = {
+        **sample_observation,
+        "customer_id": "C000001",
+        "observation_month": september,
+        "plan": "Basic",
+        "tenure_months": 0,
+        "viewing_hours": Decimal("10"),
+        "cancelled_in_month": True,
+    }
+
+    observations = [
+        basic_cancelled,
+        {
+            **basic_cancelled,
+            "customer_id": "C000002",
+            "viewing_hours": Decimal("30"),
+            "cancelled_in_month": False,
+        },
+        {
+            **basic_cancelled,
+            "customer_id": "C000003",
+            "plan": "Premium",
+            "viewing_hours": Decimal("100"),
+        },
+        {
+            **basic_cancelled,
+            "observation_month": date(2026, 10, 1),
+            "viewing_hours": Decimal("999"),
+        },
+    ]
+
+    db_connection.execute(customer_month.insert(), observations)
+
+    # EN: Apply the month and subscription-plan filters together.
+    # FR: Appliquer ensemble les filtres du mois et de l'abonnement.
+    result = get_monthly_indicators(
+        db_connection,
+        observation_month=september,
+        plan="Basic",
+    )
+
+    # EN: Neither Premium nor October may affect these indicators.
+    # FR: Ni Premium ni octobre ne doivent influencer ces indicateurs.
+    assert result["cohort_size"] == 2
+    assert result["cancellation_count"] == 1
+    assert result["cancellation_rate"] == pytest.approx(50.0)
+    assert result["average_viewing_hours"] == Decimal("20")
+
+        # EN: Without a plan filter, include all September observations.
+    # FR: Sans filtre d'abonnement, inclure toutes les observations de septembre.
+    all_plans = get_monthly_indicators(
+        db_connection,
+        observation_month=september,
+    )
+
+    assert all_plans["cohort_size"] == 3
+    assert all_plans["cancellation_count"] == 2
+    assert all_plans["cancellation_rate"] == pytest.approx(200 / 3)
+    assert all_plans["average_viewing_hours"] == pytest.approx(
+        Decimal("140") / Decimal("3")
+    )
+
+    # EN: A valid plan without observations must return empty indicators.
+    # FR: Un abonnement valide sans observations doit renvoyer des indicateurs vides.
+    standard = get_monthly_indicators(
+        db_connection,
+        observation_month=september,
+        plan="Standard",
+    )
+
+    assert standard["cohort_size"] == 0
+    assert standard["cancellation_count"] == 0
+    assert standard["cancellation_rate"] is None
+    assert standard["average_viewing_hours"] is None
