@@ -1,8 +1,11 @@
 # Monthly indicators dashboard — Implementation and verification
 
 Project: StreamRetain
+
 Task: E3-02 — Angular monthly indicators dashboard
+
 Issue: #19
+
 Sprint: Sprint 3 — November 2–15, 2026
 
 ## Purpose and scope
@@ -14,10 +17,10 @@ All customer data is synthetic. Technical verification does not
 establish product usefulness, causation or actual IVI customer behavior.
 
 The initial view selects the first month returned by
-GET /api/observation-months, whose documented order is newest first.
-It then requests GET /api/indicators with observation_month.
+`GET /api/observation-months`, whose documented order is newest first.
+It then requests `GET /api/indicators` with `observation_month`.
 
-The plan parameter is omitted, so all subscription plans are included.
+The `plan` parameter is omitted, so all subscription plans are included.
 Interactive month and plan selectors belong to E3-03.
 Plan comparisons belong to E3-04.
 
@@ -26,13 +29,13 @@ the observation period is complete.
 
 ## Implementation
 
-- indicators.models.ts defines the API response types and display states.
-- indicators.service.ts performs the two read-only HTTP requests.
-- indicators-panel.ts selects the latest month and manages loading,
+- `indicators.models.ts` defines the API response types and display states.
+- `indicators.service.ts` performs the two read-only HTTP requests.
+- `indicators-panel.ts` selects the latest month and manages loading,
   ready, empty and error states.
-- indicators-panel.html displays values and interpretation guidance.
-- indicators-panel.css provides desktop and narrow-screen layouts.
-- app.ts and app.html integrate the panel into the existing application.
+- `indicators-panel.html` displays values and interpretation guidance.
+- `indicators-panel.css` provides desktop and narrow-screen layouts.
+- `app.ts` and `app.html` integrate the panel into the existing application.
 
 TypeScript interfaces describe the expected API contract.
 They do not perform runtime response validation.
@@ -49,20 +52,20 @@ The cancellation-request rate is already expressed as a percentage
 by the API. Angular appends the percent sign without multiplying it.
 
 Rates and average viewing hours use Angular DecimalPipe with
-digitsInfo set to 1.0-2: up to two fractional digits, rounded for display.
+`digitsInfo` set to `1.0-2`: up to two fractional digits, rounded for display.
 The underlying API values are not changed.
 
 Examples:
 
 | API value | Display |
 |---|---|
-| cancellation_rate: 19 | 19% |
-| cancellation_rate: 0 | 0% |
-| average_viewing_hours: 57.1351 | 57.14 hours |
-| average_viewing_hours: 0 | 0 hours |
-| null rate or average | No data |
+| `cancellation_rate: 19` | 19% |
+| `cancellation_rate: 0` | 0% |
+| `average_viewing_hours: 57.1351` | 57.14 hours |
+| `average_viewing_hours: 0` | 0 hours |
+| Null rate or average | No data |
 
-The observation month is displayed as YYYY-MM.
+The observation month is displayed as `YYYY-MM`.
 Average viewing hours is labelled per cohort customer.
 
 ## Interface states
@@ -100,9 +103,11 @@ indicators. A successful retry restores the indicator display.
 
 ## Automated frontend verification
 
-Command, executed from frontend:
+Command, executed from `frontend`:
 
-    npm.cmd test -- --watch=false
+```powershell
+npm.cmd test -- --watch=false
+```
 
 Observed on November 9, 2026, after styling:
 
@@ -132,9 +137,11 @@ backend calculations or visual layout.
 
 ## Production build
 
-Command, executed from frontend:
+Command, executed from `frontend`:
 
-    npm.cmd run build
+```powershell
+npm.cmd run build
+```
 
 Observed on November 9, 2026, after styling:
 
@@ -142,12 +149,13 @@ Observed on November 9, 2026, after styling:
 - Build duration: 4.087 seconds.
 - Initial bundle total: 227.57 kB.
 - Estimated transfer size: 62.59 kB.
-- Output: frontend/dist/frontend.
+- Output: `frontend/dist/frontend`.
 - No bundle-budget warning appeared in the recorded output.
 
 ## Manual browser observations
 
 Browser: Microsoft Edge on Windows.
+
 Application address: http://127.0.0.1:4200.
 
 ### Real API data
@@ -170,8 +178,11 @@ The independent CSV-to-API comparison is recorded in
 With FastAPI stopped and the page reloaded, the dashboard displayed
 the generic error and retry button without indicator values.
 
-After FastAPI restarted, the indicator values were displayed again.
-Screenshots record both states.
+On November 10, 2026, keyboard navigation to "Try again" and
+activation with Enter were manually checked. After restarting
+FastAPI, retry restored the indicators without reloading the page.
+
+Screenshots record the error state and the restored indicator display.
 
 The button-based retry behavior is also covered by automated tests.
 
@@ -185,22 +196,37 @@ No horizontal overflow is visible in the captured area.
 
 This is browser device emulation, not a physical-phone test.
 
-### Remaining manual checks
+### No available observation months
 
 On November 10, 2026, the no-available-months state was manually
 verified in Microsoft Edge using a local response override:
-{"observation_months":[]}.
+
+```json
+{"observation_months":[]}
+```
 
 The interface displayed "No observation months are available.",
 zero counts and "No data" for the rate and average.
+
 A screenshot records the result. PostgreSQL data was not modified.
+This check used a simulated browser response, not an empty database.
+
+Local overrides must be disabled before returning to normal API use.
+
+### Verification limitations
 
 Loading behavior is covered by automated tests; a manual loading
 screenshot has not yet been recorded.
 
-On November 10, 2026, keyboard navigation to "Try again" and
-activation with Enter were manually checked. After restarting
-FastAPI, retry restored the indicators without reloading the page.
+Measured-zero and empty-cohort behavior are covered by automated
+component tests. The recorded manual empty-data check concerns
+the absence of available observation months.
+
+Screenshots demonstrate visible interface states.
+They do not independently prove backend calculation correctness.
+
+Screenshot links still need to be attached to the issue's
+completion evidence.
 
 ## Dependency maintenance
 
@@ -226,27 +252,77 @@ That major migration was not performed as part of this task.
 Installation-script warnings were also reported.
 The subsequent tests and production build succeeded.
 
-The regenerated package-lock.json must be committed with package.json.
+The regenerated `package-lock.json` was committed with `package.json`
+in implementation commit `9517cb4`.
 
 ## Continuous integration
 
-The frontend workflow is configured to run:
+The frontend job in `.github/workflows/checks.yml` runs these commands
+from the `frontend` directory:
 
-1. npm ci
-2. npm test -- --watch=false
-3. npm run build
+1. `npm ci`
+2. `npm test -- --watch=false`
+3. `npm run build`
 
-The backend workflow remains unchanged.
+The backend job remains unchanged.
 
-The updated workflow has not yet been verified by a published CI run.
-Local success must not be presented as GitHub Actions success.
+GitHub Actions verification completed successfully on November 10, 2026,
+for implementation commit `9517cb4`.
+
+Evidence:
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/9517cb4)
+- [Successful CI run](https://github.com/KAMATE12/RtreamRetain/actions/runs/42732797814)
+- [Frontend job logs](https://github.com/KAMATE12/RtreamRetain/actions/runs/42732797814/job/129554718031)
+
+### Observed CI results
+
+| Verification | Observed result |
+|---|---|
+| Overall workflow | Success, 31 seconds |
+| Backend job | Success, 14 seconds |
+| Frontend job | Success, 26 seconds |
+| Dependency installation | `npm ci` succeeded |
+| Frontend test files | 2 passed |
+| Frontend tests | 10 passed |
+| Vitest duration | 1.15 seconds |
+| Production build | Succeeded |
+| Angular build duration | 3.810 seconds |
+| Initial bundle total | 227.57 kB |
+| Estimated transfer size | 62.59 kB |
+
+The frontend screenshots show successful dependency installation,
+test execution and production compilation.
+
+The workflow summary confirms backend success.
+The provided screenshots do not show the backend test breakdown;
+no backend test count is inferred from them.
+
+The dependency installation still reported 16 moderate vulnerabilities
+and installation-script warnings. GitHub Actions also displayed
+action-runtime deprecation annotations.
+
+These remain maintenance items. A successful workflow does not mean
+that all dependency findings or warnings have been resolved.
 
 ## Completion status
 
-Pending:
+Implementation, tests, workflow configuration and documentation were
+committed and pushed in commit `9517cb4`:
 
-- Remaining manual browser checks and screenshot links.
-- Final change review.
-- Implementation and documentation commit.
-- Push and successful CI evidence.
-- Issue acceptance checklist and project-board update.
+`feat: display monthly indicators in Angular with explicit states`
+
+Local frontend tests and the production build passed.
+GitHub Actions also passed for this implementation commit.
+
+Browser observations and their limitations are recorded above.
+Technical verification does not establish product validation.
+
+Remaining completion work:
+
+- Commit and push this documentation update containing the CI evidence.
+- Attach screenshot evidence and implementation links to issue #19.
+- Review the issue acceptance checklist against the recorded evidence.
+- Update the project board to reflect the actual completion status.
+
+Interactive selectors and plan comparisons remain separate tasks.
