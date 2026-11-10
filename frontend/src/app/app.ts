@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { IndicatorsPanel } from './indicators-panel';
 
 @Component({
   selector: 'app-root',
+  imports: [IndicatorsPanel],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App {
   private readonly http = inject(HttpClient);

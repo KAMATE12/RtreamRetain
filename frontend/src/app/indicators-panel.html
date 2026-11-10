@@ -1,0 +1,78 @@
+<!--
+EN: Display backend indicators with explicit loading, empty and error states.
+Keep unavailable values distinct from measured zeros and explain data limits.
+
+FR: Afficher les indicateurs du backend avec des états explicites.
+Distinguer les valeurs indisponibles des zéros mesurés et expliquer les limites.
+-->
+
+<section aria-labelledby="indicators-title">
+  <h2 id="indicators-title">Monthly customer indicators</h2>
+  <p><strong>Synthetic data only.</strong> All subscription plans.</p>
+
+  <div aria-live="polite" [attr.aria-busy]="state() === 'loading'">
+    @if (state() === 'loading') {
+      <p role="status">Loading monthly indicators…</p>
+    }
+
+    @if (state() === 'error') {
+      <p role="alert">
+        Unable to load the indicators. Please try again.
+      </p>
+      <button type="button" (click)="loadIndicators()">
+        Try again
+      </button>
+    }
+
+    @if (state() === 'ready' || state() === 'empty') {
+      @if (observationMonth(); as month) {
+        <p><strong>Observation month:</strong> {{ month.slice(0, 7) }}</p>
+      } @else {
+        <p>No observation months are available.</p>
+      }
+
+      @if (state() === 'empty' && observationMonth()) {
+        <p>No observations are available for this month.</p>
+      }
+
+      <dl>
+        <dt>Beginning-of-month cohort size</dt>
+        <dd>{{ indicators()?.cohort_size ?? 0 }}</dd>
+
+        <dt>Customers who requested cancellation during the month</dt>
+        <dd>{{ indicators()?.cancellation_count ?? 0 }}</dd>
+
+        <dt>Monthly cancellation-request rate</dt>
+        <dd>
+          @if (indicators()?.cancellation_rate != null) {
+            {{ indicators()?.cancellation_rate | number:'1.0-2' }}%
+          } @else {
+            No data
+          }
+        </dd>
+
+        <dt>Average viewing hours per cohort customer</dt>
+        <dd>
+          @if (indicators()?.average_viewing_hours != null) {
+            {{ indicators()?.average_viewing_hours | number:'1.0-2' }} hours
+          } @else {
+            No data
+          }
+        </dd>
+      </dl>
+    }
+  </div>
+
+  <p>Rates and averages are displayed with up to two decimal places.</p>
+  <p>
+    The cohort is assumed to contain customers active at the beginning
+    of the month, including those who cancelled during that month.
+  </p>
+  <p>
+    The latest available month is a display default, not proof that
+    the observation period is complete.
+  </p>
+  <p>
+    Associations do not establish causation or actual IVI behavior.
+  </p>
+</section>

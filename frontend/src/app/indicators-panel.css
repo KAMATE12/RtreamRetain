@@ -1,0 +1,127 @@
+/**
+ * EN: Make monthly indicators and interface states easy to read.
+ * Keep labels beside their values on wide screens and stack them
+ * on narrow screens. Provide a visible keyboard focus for retry.
+ *
+ * FR: Faciliter la lecture des indicateurs et des états de l'interface.
+ * Placer les libellés à côté des valeurs sur grand écran et les empiler
+ * sur petit écran. Rendre le focus clavier du bouton bien visible.
+ */
+
+:host {
+  display: block;
+  margin-top: 24px;
+}
+
+section {
+  padding: 26px;
+  background: #ffffff;
+  border: 1px solid #d6deeb;
+  border-radius: 12px;
+  color: #172b49;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* EN: Align each label with its corresponding value.
+   FR: Aligner chaque libellé avec sa valeur. */
+dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+  margin: 24px 0;
+}
+
+dt,
+dd {
+  padding: 16px 0;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+dt {
+  align-self: stretch;
+  line-height: 1.5;
+}
+
+dd {
+  margin: 0;
+  text-align: right;
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* EN: Distinguish loading and failure using text and visual styling.
+   FR: Distinguer chargement et erreur par le texte et la présentation. */
+[role="status"],
+[role="alert"] {
+  padding: 16px;
+  border-radius: 6px;
+}
+
+[role="status"] {
+  background: #edf3fc;
+  color: #244887;
+}
+
+[role="alert"] {
+  background: #fff1f0;
+  color: #8a2424;
+  border: 1px solid #e7b6b2;
+}
+
+button {
+  min-height: 44px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 6px;
+  background: #244887;
+  color: white;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #193765;
+}
+
+button:focus-visible {
+  outline: 3px solid #a45c00;
+  outline-offset: 3px;
+}
+
+/* EN: Keep interpretation guidance readable below the results.
+   FR: Garder les explications lisibles sous les résultats. */
+section > p {
+  color: #40516a;
+}
+
+/* EN: Stack labels and values on narrow screens.
+   FR: Empiler les libellés et valeurs sur les petits écrans. */
+@media (max-width: 600px) {
+  section {
+    padding: 20px;
+  }
+
+  dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  dt {
+    padding-bottom: 4px;
+    border-bottom: 0;
+  }
+
+  dd {
+    padding-top: 0;
+    text-align: left;
+  }
+}
