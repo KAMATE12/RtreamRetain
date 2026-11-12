@@ -125,3 +125,54 @@ section > p {
     text-align: left;
   }
 }
+
+/* EN: Arrange labelled filters in columns that adapt to available space.
+   FR: Disposer les filtres dans des colonnes adaptées à l'espace disponible. */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 24px 0 16px;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter label {
+  font-weight: 600;
+}
+
+.filter select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #8293ad;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172b49;
+  font: inherit;
+}
+
+.filter select:focus-visible {
+  outline: 3px solid #a45c00;
+  outline-offset: 3px;
+}
+
+.active-selection {
+  padding: 12px;
+  background: #edf3fc;
+  border-radius: 6px;
+}
+
+/* EN: Use one filter per row on narrow screens.
+   FR: Afficher un filtre par ligne sur les petits écrans. */
+@media (max-width: 600px) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,11 +1,13 @@
 /**
- * EN: Verify the indicator service's HTTP requests using controlled responses.
- * No real API or database is contacted. These tests check endpoint addresses,
- * month forwarding and preservation of unavailable indicator values.
+ * EN: Verify indicator HTTP requests using controlled responses.
+ * Check available-month ordering, month and plan parameters, switching
+ * back to all plans, and preservation of unavailable indicator values.
+ * No real API or database is contacted.
  *
- * FR: Vérifier les requêtes HTTP du service avec des réponses contrôlées.
- * Aucune API ni base réelle n'est contactée. Ces tests contrôlent les adresses,
- * la transmission du mois et la conservation des valeurs indisponibles.
+ * FR: Vérifier les requêtes HTTP avec des réponses contrôlées.
+ * Contrôler l'ordre des mois, les paramètres mois et abonnement,
+ * le retour à tous les abonnements et les valeurs indisponibles.
+ * Aucune API ni base de données réelle n'est contactée.
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -17,7 +19,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IndicatorsService } from './indicators.service';
-import { MonthlyIndicators } from './indicators.models';
+import {
+  MonthlyIndicators,
+  SubscriptionPlan,
+} from './indicators.models';
 
 describe('IndicatorsService', () => {
   let service: IndicatorsService;
@@ -94,5 +99,99 @@ describe('IndicatorsService', () => {
     // EN: Unavailable values must remain null rather than becoming zero.
     // FR: Les valeurs indisponibles doivent rester null, et non devenir zéro.
     expect(actual).toEqual(expected);
+  });
+
+  const plans: SubscriptionPlan[] = ['Basic', 'Standard', 'Premium'];
+
+  it.each(plans)(
+    'forwards the selected month and %s plan without changing API values',
+    (plan) => {
+      const expected: MonthlyIndicators = {
+        observation_month: '2026-10-01',
+        cohort_size: 8,
+        cancellation_count: 1,
+        cancellation_rate: 12.5,
+        average_viewing_hours: 23.456,
+      };
+
+      let actual: MonthlyIndicators | undefined;
+
+      service.getMonthlyIndicators('2026-10-01', plan)
+        .subscribe((response) => {
+          actual = response;
+        });
+
+      // EN: Match the endpoint independently of query-parameter order.
+      // FR: Identifier l'adresse sans dépendre de l'ordre des paramètres.
+      const request = httpTesting.expectOne(
+        (candidate) => candidate.url === '/api/indicators'
+      );
+
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.get('observation_month'))
+        .toBe('2026-10-01');
+      expect(request.request.params.get('plan')).toBe(plan);
+      expect(request.request.params.keys().sort())
+        .toEqual(['observation_month', 'plan']);
+
+      request.flush(expected);
+
+      // EN: The service forwards values; display rounding belongs to the UI.
+      // FR: Le service transmet les valeurs ; l'interface gère leur arrondi.
+      expect(actual).toEqual(expected);
+    }
+  );
+
+  it('omits the plan when returning to all plans after a filtered request', () => {
+    const filtered: MonthlyIndicators = {
+      observation_month: '2026-09-01',
+      cohort_size: 2,
+      cancellation_count: 1,
+      cancellation_rate: 50,
+      average_viewing_hours: 20,
+    };
+
+    const allPlans: MonthlyIndicators = {
+      observation_month: '2026-09-01',
+      cohort_size: 4,
+      cancellation_count: 1,
+      cancellation_rate: 25,
+      average_viewing_hours: 30,
+    };
+
+    // EN: First complete a request restricted to Basic.
+    // FR: Terminer d'abord une demande limitée à Basic.
+    service.getMonthlyIndicators('2026-09-01', 'Basic').subscribe();
+
+    const filteredRequest = httpTesting.expectOne(
+      (candidate) => candidate.url === '/api/indicators'
+    );
+
+    expect(filteredRequest.request.params.get('plan')).toBe('Basic');
+    filteredRequest.flush(filtered);
+
+    let actual: MonthlyIndicators | undefined;
+
+    // EN: Explicit null represents the user's All plans selection.
+    // FR: Null représente explicitement le choix All plans de l'utilisateur.
+    service.getMonthlyIndicators('2026-09-01', null)
+      .subscribe((response) => {
+        actual = response;
+      });
+
+    const allPlansRequest = httpTesting.expectOne(
+      (candidate) => candidate.url === '/api/indicators'
+    );
+
+    expect(allPlansRequest.request.method).toBe('GET');
+    expect(allPlansRequest.request.params.get('observation_month'))
+      .toBe('2026-09-01');
+    expect(allPlansRequest.request.params.has('plan')).toBe(false);
+    expect(allPlansRequest.request.params.keys())
+      .toEqual(['observation_month']);
+
+    allPlansRequest.flush(allPlans);
+
+    expect(actual).toEqual(allPlans);
   });
 });

@@ -1,14 +1,55 @@
 <!--
-EN: Display backend indicators with explicit loading, empty and error states.
-Keep unavailable values distinct from measured zeros and explain data limits.
+EN: Display month and plan selectors alongside the matching indicators.
+Keep filters visible during loading and failure, hide obsolete values,
+and distinguish unavailable indicators from measured zeros.
 
-FR: Afficher les indicateurs du backend avec des états explicites.
-Distinguer les valeurs indisponibles des zéros mesurés et expliquer les limites.
+FR: Afficher les sélecteurs et les indicateurs correspondant à leur choix.
+Conserver les filtres pendant le chargement et les erreurs, masquer les
+anciennes valeurs et distinguer les données indisponibles des zéros mesurés.
 -->
 
 <section aria-labelledby="indicators-title">
   <h2 id="indicators-title">Monthly customer indicators</h2>
-  <p><strong>Synthetic data only.</strong> All subscription plans.</p>
+  <p><strong>Synthetic data only.</strong></p>
+
+  @if (selection(); as current) {
+    <div class="filters" role="group" aria-label="Indicator filters">
+      <div class="filter">
+        <label for="observation-month">Observation month</label>
+        <select
+          id="observation-month"
+          #monthSelect
+          [value]="current.observationMonth"
+          (change)="changeMonth(monthSelect.value)"
+        >
+          @for (month of availableMonths(); track month) {
+            <option [value]="month">{{ month.slice(0, 7) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter">
+        <label for="subscription-plan">Subscription plan</label>
+        <select
+          id="subscription-plan"
+          #planSelect
+          [value]="current.plan ?? ''"
+          (change)="changePlan(planSelect.value)"
+        >
+          <option value="">All plans</option>
+          @for (plan of plans; track plan) {
+            <option [value]="plan">{{ plan }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <p class="active-selection">
+      <strong>Observation month:</strong>
+      {{ current.observationMonth.slice(0, 7) }}
+      · <strong>Subscription plan:</strong> {{ planLabel() }}
+    </p>
+  }
 
   <div aria-live="polite" [attr.aria-busy]="state() === 'loading'">
     @if (state() === 'loading') {
@@ -25,14 +66,10 @@ Distinguer les valeurs indisponibles des zéros mesurés et expliquer les limite
     }
 
     @if (state() === 'ready' || state() === 'empty') {
-      @if (observationMonth(); as month) {
-        <p><strong>Observation month:</strong> {{ month.slice(0, 7) }}</p>
-      } @else {
+      @if (!selection()) {
         <p>No observation months are available.</p>
-      }
-
-      @if (state() === 'empty' && observationMonth()) {
-        <p>No observations are available for this month.</p>
+      } @else if (state() === 'empty') {
+        <p>No observations are available for this month and plan selection.</p>
       }
 
       <dl>

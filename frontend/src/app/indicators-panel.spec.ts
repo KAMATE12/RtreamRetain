@@ -1,12 +1,12 @@
 /**
- * EN: Test the dashboard's rendered content using controlled HTTP responses.
- * Cover loading, latest-month selection, rounding, zeros, missing data,
- * errors, retry and removal of stale results without contacting PostgreSQL.
+ * EN: Verify rendered filters and indicators using controlled HTTP responses.
+ * Cover two months, multiple plans, empty results, retry, stale-value removal
+ * and cancellation of obsolete requests. No real database is contacted.
  *
- * FR: Tester le contenu affiché avec des réponses HTTP contrôlées.
- * Couvrir le chargement, le dernier mois, les arrondis, les zéros,
- * les données absentes, les erreurs, la nouvelle tentative et le retrait
- * des anciens résultats, sans contacter PostgreSQL.
+ * FR: Vérifier les filtres et indicateurs avec des réponses HTTP contrôlées.
+ * Couvrir deux mois, plusieurs abonnements, les résultats vides, les erreurs,
+ * les nouvelles tentatives et l'annulation des demandes dépassées.
+ * Aucune base de données réelle n'est contactée.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -18,23 +18,68 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IndicatorsPanel } from './indicators-panel';
-import { MonthlyIndicators } from './indicators.models';
+import {
+  MonthlyIndicators,
+  PlanSelection,
+} from './indicators.models';
 
 describe('IndicatorsPanel', () => {
   let fixture: ComponentFixture<IndicatorsPanel>;
   let httpTesting: HttpTestingController;
   let element: HTMLElement;
 
+  const september = '2026-09-01';
+  const october = '2026-10-01';
   const monthsUrl = '/api/observation-months';
-  const indicatorsUrl =
-    '/api/indicators?observation_month=2026-09-01';
 
-  const knownIndicators: MonthlyIndicators = {
-    observation_month: '2026-09-01',
-    cohort_size: 100,
-    cancellation_count: 19,
-    cancellation_rate: 19,
-    average_viewing_hours: 57.1351,
+  // EN: Expected responses are written explicitly, not recalculated by tests.
+  // FR: Les réponses attendues sont explicites, sans recalcul dans les tests.
+  const septemberAll: MonthlyIndicators = {
+    observation_month: september,
+    cohort_size: 4,
+    cancellation_count: 1,
+    cancellation_rate: 25,
+    average_viewing_hours: 30,
+  };
+
+  const septemberBasic: MonthlyIndicators = {
+    observation_month: september,
+    cohort_size: 2,
+    cancellation_count: 1,
+    cancellation_rate: 50,
+    average_viewing_hours: 20,
+  };
+
+  const septemberPremium: MonthlyIndicators = {
+    observation_month: september,
+    cohort_size: 2,
+    cancellation_count: 0,
+    cancellation_rate: 0,
+    average_viewing_hours: 40,
+  };
+
+  const octoberAll: MonthlyIndicators = {
+    observation_month: october,
+    cohort_size: 2,
+    cancellation_count: 1,
+    cancellation_rate: 50,
+    average_viewing_hours: 10,
+  };
+
+  const octoberBasic: MonthlyIndicators = {
+    observation_month: october,
+    cohort_size: 1,
+    cancellation_count: 0,
+    cancellation_rate: 0,
+    average_viewing_hours: 0,
+  };
+
+  const octoberPremium: MonthlyIndicators = {
+    observation_month: october,
+    cohort_size: 1,
+    cancellation_count: 1,
+    cancellation_rate: 100,
+    average_viewing_hours: 20,
   };
 
   beforeEach(async () => {
@@ -49,9 +94,6 @@ describe('IndicatorsPanel', () => {
     httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(IndicatorsPanel);
     element = fixture.nativeElement as HTMLElement;
-
-    // EN: Render the component and trigger its initial request.
-    // FR: Afficher le composant et déclencher sa requête initiale.
     fixture.detectChanges();
   });
 
@@ -63,189 +105,318 @@ describe('IndicatorsPanel', () => {
     return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
   }
 
-  function displayedValues(): string[] {
-    // EN: Read the four displayed indicator values in their defined order.
-    // FR: Lire les quatre valeurs affichées dans leur ordre défini.
+  function values(): string[] {
     return Array.from(element.querySelectorAll('dd')).map(
       (node) => (node.textContent ?? '').replace(/\s+/g, ' ').trim()
     );
   }
 
-  function respondWithMonths(): void {
-    httpTesting.expectOne(monthsUrl).flush({
-      observation_months: ['2026-09-01', '2026-08-01'],
-    });
+  function select(id: string): HTMLSelectElement {
+    const control = element.querySelector<HTMLSelectElement>(`#${id}`);
+    expect(control).not.toBeNull();
+    return control!;
   }
 
-  function respondWithIndicators(
-    result: MonthlyIndicators = knownIndicators
-  ): void {
-    httpTesting.expectOne(indicatorsUrl).flush(result);
+  function change(id: string, value: string): void {
+    // EN: Exercise the actual HTML control and its change event.
+    // FR: Utiliser le vrai contrôle HTML et son événement de changement.
+    const control = select(id);
+    control.value = value;
+    control.dispatchEvent(new Event('change', { bubbles: true }));
     fixture.detectChanges();
   }
 
-  it('shows loading without measured values during both requests', () => {
+  function respondWithMonths(): void {
+    httpTesting.expectOne(monthsUrl).flush({
+      observation_months: [october, september],
+    });
+    fixture.detectChanges();
+  }
+
+  function expectIndicators(month: string, plan: PlanSelection = null) {
+    const request = httpTesting.expectOne(
+      (candidate) =>
+        candidate.url === '/api/indicators' &&
+        candidate.params.get('observation_month') === month &&
+        candidate.params.get('plan') === plan
+    );
+    expect(request.request.method).toBe('GET');
+    return request;
+  }
+
+  function respond(
+    result: MonthlyIndicators,
+    plan: PlanSelection = null,
+  ): void {
+    expectIndicators(result.observation_month, plan).flush(result);
+    fixture.detectChanges();
+  }
+
+  function initialize(): void {
+    respondWithMonths();
+    respond(octoberAll);
+  }
+
+  function retry(): void {
+    const button = element.querySelector<HTMLButtonElement>('button');
+    expect(button).not.toBeNull();
+    button!.click();
+    fixture.detectChanges();
+  }
+
+  it('shows loading without measured values during both initial requests', () => {
     expect(text()).toContain('Loading monthly indicators');
-    expect(displayedValues()).toEqual([]);
+    expect(values()).toEqual([]);
+
+    respondWithMonths();
+
+    expect(values()).toEqual([]);
     expect(
       element.querySelector('[aria-live]')?.getAttribute('aria-busy')
     ).toBe('true');
 
-    respondWithMonths();
-    fixture.detectChanges();
+    respond(octoberAll);
 
-    // EN: Loading continues until the indicator response arrives.
-    // FR: Le chargement continue jusqu'à la réponse des indicateurs.
-    expect(text()).toContain('Loading monthly indicators');
-    expect(displayedValues()).toEqual([]);
-
-    respondWithIndicators();
-
-    expect(element.querySelector('[role="status"]')).toBeNull();
     expect(
       element.querySelector('[aria-live]')?.getAttribute('aria-busy')
     ).toBe('false');
+    expect(element.querySelector('[role="status"]')).toBeNull();
   });
 
-  it('displays the latest month, API values and rounded average', () => {
-    respondWithMonths();
-    respondWithIndicators();
+  it('populates months and four plans with the documented defaults', () => {
+    initialize();
 
-    expect(text()).toContain('Observation month: 2026-09');
-    expect(displayedValues()).toEqual([
-      '100',
-      '19',
-      '19%',
-      '57.14 hours',
-    ]);
+    expect(
+      Array.from(select('observation-month').options).map(
+        (option) => option.value
+      )
+    ).toEqual([october, september]);
+
+    expect(
+      Array.from(select('subscription-plan').options).map(
+        (option) => option.textContent
+      )
+    ).toEqual(['All plans', 'Basic', 'Standard', 'Premium']);
+
+    expect(select('observation-month').value).toBe(october);
+    expect(select('subscription-plan').value).toBe('');
+    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(text()).toContain('Observation month: 2026-10');
+    expect(text()).toContain('Subscription plan: All plans');
     expect(text()).toContain('Synthetic data only.');
-    expect(text()).toContain('All subscription plans.');
     expect(text()).toContain(
       'Associations do not establish causation or actual IVI behavior.'
     );
   });
 
-  it('displays measured zeros instead of No data', () => {
+  it('rounds API values only for display', () => {
     respondWithMonths();
-    respondWithIndicators({
-      ...knownIndicators,
-      cohort_size: 1,
-      cancellation_count: 0,
-      cancellation_rate: 0,
-      average_viewing_hours: 0,
+    respond({
+      ...octoberAll,
+      average_viewing_hours: 57.1351,
     });
 
-    expect(displayedValues()).toEqual(['1', '0', '0%', '0 hours']);
-    expect(text()).not.toContain('No data');
-    expect(text()).not.toContain(
-      'No observations are available for this month.'
-    );
+    expect(values()).toEqual(['2', '1', '50%', '57.14 hours']);
   });
 
-  it('displays zero counts and No data for an empty cohort', () => {
-    respondWithMonths();
-    respondWithIndicators({
-      ...knownIndicators,
+  it('requests another month and hides previous results while loading', () => {
+    initialize();
+    change('observation-month', september);
+
+    expect(values()).toEqual([]);
+    expect(text()).toContain('Observation month: 2026-09');
+    expect(text()).toContain('Loading monthly indicators');
+
+    respond(septemberAll);
+
+    expect(values()).toEqual(['4', '1', '25%', '30 hours']);
+    httpTesting.expectNone(monthsUrl);
+  });
+
+  it('applies plan changes to all values and restores all-plan results', () => {
+    initialize();
+
+    change('subscription-plan', 'Premium');
+    respond(octoberPremium, 'Premium');
+    expect(values()).toEqual(['1', '1', '100%', '20 hours']);
+    expect(text()).toContain('Subscription plan: Premium');
+
+    change('subscription-plan', '');
+    respond(octoberAll);
+    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(text()).toContain('Subscription plan: All plans');
+  });
+
+  it('preserves Basic when changing months and displays measured zeros', () => {
+    initialize();
+
+    change('subscription-plan', 'Basic');
+    respond(octoberBasic, 'Basic');
+    expect(values()).toEqual(['1', '0', '0%', '0 hours']);
+    expect(text()).not.toContain('No data');
+
+    change('observation-month', september);
+    expect(select('subscription-plan').value).toBe('Basic');
+
+    respond(septemberBasic, 'Basic');
+    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+    expect(text()).toContain('Observation month: 2026-09');
+    expect(text()).toContain('Subscription plan: Basic');
+  });
+
+  it('displays the known Premium results for September', () => {
+    initialize();
+    change('observation-month', september);
+    respond(septemberAll);
+
+    change('subscription-plan', 'Premium');
+    respond(septemberPremium, 'Premium');
+
+    expect(values()).toEqual(['2', '0', '0%', '40 hours']);
+  });
+
+  it('keeps an absent plan selected and displays No data across months', () => {
+    initialize();
+    change('subscription-plan', 'Standard');
+
+    respond({
+      observation_month: october,
       cohort_size: 0,
       cancellation_count: 0,
       cancellation_rate: null,
       average_viewing_hours: null,
-    });
+    }, 'Standard');
 
-    expect(text()).toContain('Observation month: 2026-09');
+    expect(values()).toEqual(['0', '0', 'No data', 'No data']);
     expect(text()).toContain(
-      'No observations are available for this month.'
+      'No observations are available for this month and plan selection.'
     );
-    expect(displayedValues()).toEqual([
-      '0', '0', 'No data', 'No data',
-    ]);
+
+    change('observation-month', september);
+    expect(select('subscription-plan').value).toBe('Standard');
+
+    respond({
+      observation_month: september,
+      cohort_size: 0,
+      cancellation_count: 0,
+      cancellation_rate: null,
+      average_viewing_hours: null,
+    }, 'Standard');
+
+    expect(values()).toEqual(['0', '0', 'No data', 'No data']);
+    expect(text()).toContain('Subscription plan: Standard');
   });
 
-  it('shows an empty state without requesting indicators when no months exist', () => {
-    httpTesting.expectOne(monthsUrl).flush({
-      observation_months: [],
-    });
+  it('does not request indicators when no observation months exist', () => {
+    httpTesting.expectOne(monthsUrl).flush({ observation_months: [] });
     fixture.detectChanges();
 
     httpTesting.expectNone(
       (request) => request.url === '/api/indicators'
     );
-
+    expect(element.querySelector('select')).toBeNull();
     expect(text()).toContain('No observation months are available.');
-    expect(text()).not.toContain('Observation month:');
-    expect(displayedValues()).toEqual([
-      '0', '0', 'No data', 'No data',
-    ]);
+    expect(values()).toEqual(['0', '0', 'No data', 'No data']);
   });
 
-  it.each(['months', 'indicators'] as const)(
-    'recovers through the retry button after a %s request failure',
-    (failedRequest) => {
-      // EN: Exercise failure of either endpoint independently.
-      // FR: Tester séparément l'échec de chacune des deux routes.
-      if (failedRequest === 'indicators') {
-        respondWithMonths();
-      }
-
-      const url =
-        failedRequest === 'months' ? monthsUrl : indicatorsUrl;
-
-      httpTesting.expectOne(url).flush(
-        { detail: 'INTERNAL_TEST_DETAIL' },
-        { status: 503, statusText: 'Service Unavailable' }
-      );
-      fixture.detectChanges();
-
-      expect(text()).toContain(
-        'Unable to load the indicators. Please try again.'
-      );
-      expect(text()).not.toContain('INTERNAL_TEST_DETAIL');
-      expect(displayedValues()).toEqual([]);
-      expect(text()).not.toContain('Observation month:');
-
-      // EN: Use the actual button, not a direct call to the retry method.
-      // FR: Utiliser le vrai bouton, sans appeler directement la méthode.
-      const button = element.querySelector('button');
-      expect(button).not.toBeNull();
-      button!.click();
-      fixture.detectChanges();
-
-      expect(text()).toContain('Loading monthly indicators');
-      expect(element.querySelector('[role="alert"]')).toBeNull();
-
-      respondWithMonths();
-      respondWithIndicators();
-
-      expect(displayedValues()).toEqual([
-        '100', '19', '19%', '57.14 hours',
-      ]);
-      expect(element.querySelector('[role="alert"]')).toBeNull();
-      expect(element.querySelector('button')).toBeNull();
-    }
-  );
-
-  it('removes previous results during a reload and after its failure', () => {
-    respondWithMonths();
-    respondWithIndicators();
-    expect(displayedValues()).toHaveLength(4);
-
-    // EN: Trigger another load to verify the stale-result protection.
-    // FR: Déclencher un rechargement pour vérifier le retrait des anciens résultats.
-    fixture.componentInstance.loadIndicators();
+  it('retries month discovery after its initial failure', () => {
+    httpTesting.expectOne(monthsUrl).flush(
+      { detail: 'INTERNAL_TEST_DETAIL' },
+      { status: 503, statusText: 'Service Unavailable' }
+    );
     fixture.detectChanges();
 
-    expect(text()).toContain('Loading monthly indicators');
-    expect(displayedValues()).toEqual([]);
-    expect(text()).not.toContain('Observation month:');
+    expect(text()).not.toContain('INTERNAL_TEST_DETAIL');
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
 
-    httpTesting.expectOne(monthsUrl).flush(
+    retry();
+    respondWithMonths();
+    respond(octoberAll);
+
+    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(element.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('preserves filters after failure and retries the current selection', () => {
+    initialize();
+    change('observation-month', september);
+    respond(septemberAll);
+    change('subscription-plan', 'Basic');
+
+    expectIndicators(september, 'Basic').flush(
+      { detail: 'INTERNAL_TEST_DETAIL' },
+      { status: 503, statusText: 'Service Unavailable' }
+    );
+    fixture.detectChanges();
+
+    expect(values()).toEqual([]);
+    expect(select('observation-month').value).toBe(september);
+    expect(select('subscription-plan').value).toBe('Basic');
+    expect(text()).toContain('Subscription plan: Basic');
+    expect(text()).not.toContain('INTERNAL_TEST_DETAIL');
+
+    retry();
+    expect(values()).toEqual([]);
+    httpTesting.expectNone(monthsUrl);
+    respond(septemberBasic, 'Basic');
+
+    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+    expect(element.querySelector('[role="alert"]')).toBeNull();
+    expect(element.querySelector('button')).toBeNull();
+  });
+
+  it('allows a different selection after a failed request', () => {
+    initialize();
+    change('subscription-plan', 'Basic');
+
+    expectIndicators(october, 'Basic').flush(
       {},
       { status: 503, statusText: 'Service Unavailable' }
     );
     fixture.detectChanges();
 
-    expect(element.querySelector('[role="alert"]')).not.toBeNull();
-    expect(displayedValues()).toEqual([]);
-    expect(text()).not.toContain('57.14 hours');
+    change('subscription-plan', 'Premium');
+    expect(element.querySelector('[role="alert"]')).toBeNull();
+    respond(octoberPremium, 'Premium');
+
+    expect(values()).toEqual(['1', '1', '100%', '20 hours']);
+  });
+
+  it('cancels obsolete requests during rapid month and plan changes', () => {
+    respondWithMonths();
+    const initialRequest = expectIndicators(october);
+
+    change('subscription-plan', 'Basic');
+    const basicRequest = expectIndicators(october, 'Basic');
+
+    expect(initialRequest.cancelled).toBe(true);
+
+    change('observation-month', september);
+    expect(basicRequest.cancelled).toBe(true);
+    expect(values()).toEqual([]);
+
+    // EN: The latest request completes before the obsolete requests.
+    // FR: La dernière demande se termine avant les demandes dépassées.
+    respond(septemberBasic, 'Basic');
+    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+
+    // EN: Angular's HTTP test backend refuses late delivery after cancellation.
+    // FR: Le simulateur HTTP refuse une réponse tardive après annulation.
+    expect(() => initialRequest.flush(octoberAll)).toThrow();
+    expect(() => basicRequest.flush(octoberBasic)).toThrow();
+
+    fixture.detectChanges();
+    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+    expect(text()).toContain('Observation month: 2026-09');
+    expect(text()).toContain('Subscription plan: Basic');
+  });
+
+  it('cancels a pending indicator request when the panel is destroyed', () => {
+    respondWithMonths();
+    const request = expectIndicators(october);
+
+    fixture.destroy();
+
+    expect(request.cancelled).toBe(true);
   });
 });
