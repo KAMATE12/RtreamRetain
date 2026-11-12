@@ -546,15 +546,43 @@ action-runtime deprecation annotations.
 
 A successful workflow does not resolve these maintenance findings.
 
-### E3-03 CI status
+### E3-03 CI evidence
 
-E3-03 local tests and production compilation passed.
+The implementation and documentation were committed and pushed
+in commit `f2b36ad`:
 
-An implementation commit, push and corresponding GitHub Actions
-run have not yet been recorded for E3-03.
+`feat: filter monthly indicators by month and subscription plan`
 
-The E3-02 CI run is historical evidence and must not be presented
-as validation of the new selector implementation.
+Evidence:
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/f2b36ad)
+- [Successful CI run](https://github.com/KAMATE12/RtreamRetain/actions/runs/43123414181)
+- [Frontend logs](https://github.com/KAMATE12/RtreamRetain/actions/runs/43123414181/job/130869320621)
+
+The recorded frontend logs are dated November 11, 2026, in UTC.
+The screenshots were reviewed on November 12, 2026.
+
+| Verification | Observed result |
+|---|---|
+| Frontend job | Success, 23 seconds |
+| Backend job | Success, 14 seconds |
+| Dependency installation | npm ci succeeded |
+| Frontend test files | 2 passed |
+| Service tests | 6 passed |
+| Component tests | 14 passed |
+| Total frontend tests | 20 passed |
+| Vitest duration | 1.43 seconds |
+| Production build | Succeeded |
+| Angular build duration | 4.380 seconds |
+| Initial bundle total | 236.36 kB |
+| Estimated transfer size | 64.93 kB |
+
+The backend screenshot confirms successful pytest execution.
+Its test breakdown is not expanded, so no backend test count
+is inferred from this evidence.
+
+The screenshots do not establish a new dependency-audit result
+or resolution of previously documented maintenance findings.
 
 ## Integration with E3-04
 
@@ -573,13 +601,15 @@ the same filter scope.
 E3-02 is complete according to the recorded publication evidence
 and the project author's closure confirmation.
 
-E3-03 implementation and local verification are complete.
-Publication and issue closure remain pending.
+E3-03 implementation, tests and documentation were committed
+and pushed in `f2b36ad`.
+
+Local frontend tests, the production build and GitHub Actions passed.
+Browser observations and verification limitations are recorded above.
 
 Remaining E3-03 completion work:
 
-- Review and commit the seven frontend files and this documentation.
-- Push the implementation and record its GitHub Actions result.
+- Publish this documentation update containing the CI evidence.
 - Add implementation links, browser screenshots and verification
   evidence to issue #20.
 - Review acceptance criteria against the recorded evidence.
