@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 import {
   MonthlyIndicators,
   ObservationMonthsResponse,
+  PlanComparisonsResponse,
   PlanSelection,
 } from './indicators.models';
 
@@ -28,8 +29,8 @@ export class IndicatorsService {
   private readonly http = inject(HttpClient);
 
   getAvailableMonths(): Observable<ObservationMonthsResponse> {
-    // EN: Preserve the newest-first order supplied by the API.
-    // FR: Conserver l'ordre décroissant des mois fourni par l'API.
+    //EN: Retrieve available months, summary indicators and plan comparisons.
+    // EN: Retrieve available months, summary indicators and plan comparisons.
     return this.http.get<ObservationMonthsResponse>(
       '/api/observation-months'
     );
@@ -40,7 +41,7 @@ export class IndicatorsService {
     plan: PlanSelection = null,
   ): Observable<MonthlyIndicators> {
     // EN: Every request targets exactly one observation month.
-    // FR: Chaque demande concerne exactement un mois d'observation.
+    //FR: Récupérer les mois disponibles, les indicateurs et les comparaisons.
     const params: Record<string, string> = {
       observation_month: observationMonth,
     };
@@ -54,5 +55,27 @@ export class IndicatorsService {
     return this.http.get<MonthlyIndicators>('/api/indicators', {
       params,
     });
+  }
+
+    getPlanComparisons(
+    observationMonth: string,
+    plan: PlanSelection = null,
+  ): Observable<PlanComparisonsResponse> {
+    // EN: Use the same filter parameters as the summary indicators.
+    // FR: Utiliser les mêmes paramètres que pour les indicateurs du résumé.
+    const params: Record<string, string> = {
+      observation_month: observationMonth,
+    };
+
+    // EN: All plans omits the plan parameter.
+    // FR: All plans omet le paramètre d'abonnement.
+    if (plan !== null) {
+      params['plan'] = plan;
+    }
+
+    return this.http.get<PlanComparisonsResponse>(
+      '/api/plan-comparisons',
+      { params },
+    );
   }
 }

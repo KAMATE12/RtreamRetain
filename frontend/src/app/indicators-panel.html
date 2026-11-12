@@ -6,6 +6,9 @@ and distinguish unavailable indicators from measured zeros.
 FR: Afficher les sélecteurs et les indicateurs correspondant à leur choix.
 Conserver les filtres pendant le chargement et les erreurs, masquer les
 anciennes valeurs et distinguer les données indisponibles des zéros mesurés.
+
+EN: Show plan denominators, cancellation counts and rates together.
+FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
 -->
 
 <section aria-labelledby="indicators-title">
@@ -97,6 +100,69 @@ anciennes valeurs et distinguer les données indisponibles des zéros mesurés.
           }
         </dd>
       </dl>
+
+            <!--
+      EN: Keep the comparison inside the successful or empty result state.
+      FR: Garder la comparaison dans l'état de résultat réussi ou vide.
+      -->
+      <h3 id="plan-comparison-title">Subscription-plan comparison</h3>
+
+      @if (comparisons().length === 0) {
+        <p>No subscription-plan observations are available for this selection.</p>
+      } @else {
+        <div
+          class="comparison-table-container"
+          role="region"
+          aria-labelledby="plan-comparison-title"
+          tabindex="0"
+        >
+          <table class="comparison-table">
+            <caption>
+              Observation month:
+              {{ selection()?.observationMonth?.slice(0, 7) }}
+              · Subscription plan: {{ planLabel() }}
+            </caption>
+
+            <thead>
+              <tr>
+                <th scope="col">Subscription plan at beginning of month</th>
+                <th scope="col">Beginning-of-month cohort size</th>
+                <th scope="col">Cancellation requests during month</th>
+                <th scope="col">Cancellation-request rate (%)</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (comparison of comparisons(); track comparison.plan) {
+                <tr>
+                  <th scope="row">{{ comparison.plan }}</th>
+                  <td>{{ comparison.cohort_size }}</td>
+                  <td>{{ comparison.cancellation_count }}</td>
+                  <td>
+                    @if (comparison.cancellation_rate != null) {
+                      {{ comparison.cancellation_rate | number:'1.0-2' }}%
+                    } @else {
+                      No data
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <p>
+        Group sizes differ: always consider the cohort size alongside the rate.
+        The overall rate uses combined counts, not a simple average of plan rates.
+      </p>
+      <p>
+        A higher observed rate is a reason for investigation, not proof that
+        the subscription plan caused cancellations.
+        No statistical significance testing is implemented.
+        These synthetic results do not establish actual IVI behavior
+        or proven retention effectiveness.
+      </p>
     }
   </div>
 

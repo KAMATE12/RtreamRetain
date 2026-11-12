@@ -47,3 +47,20 @@ export interface MonthlyIndicators {
 /** EN: Explicit states used by the indicator interface.
  *  FR: États explicites utilisés par l'interface des indicateurs. */
 export type IndicatorsState = 'loading' | 'ready' | 'empty' | 'error';
+
+/** EN: Backend-calculated indicators for one represented subscription plan.
+ *  FR: Indicateurs calculés par le backend pour un abonnement représenté. */
+export interface PlanComparison {
+  plan: SubscriptionPlan;
+  cohort_size: number;
+  cancellation_count: number;
+  cancellation_rate: number | null;
+}
+
+/** EN: Comparison groups together with their requested filter scope.
+ *  FR: Groupes de comparaison accompagnés du périmètre demandé. */
+export interface PlanComparisonsResponse {
+  observation_month: string;
+  plan: PlanSelection;
+  comparisons: PlanComparison[];
+}

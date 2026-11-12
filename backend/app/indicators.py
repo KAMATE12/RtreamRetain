@@ -1,4 +1,12 @@
-"""Calculations for monthly customer indicators."""
+"""
+EN: Calculate monthly summary indicators and subscription-plan comparisons.
+Use the selected month's stored cohort and an optional plan restriction.
+Reuse the same cancellation-rate calculation for summaries and groups.
+
+FR: Calculer les indicateurs mensuels et les comparaisons par abonnement.
+Utiliser la cohorte du mois sélectionné et un filtre facultatif d'abonnement.
+Réutiliser le même calcul du taux pour le résumé et les groupes.
+"""
 
 from datetime import date
 
@@ -115,3 +123,62 @@ def get_available_observation_months(
     # EN: Return date values rather than rows containing one column.
     # FR: Renvoyer les dates plutôt que des lignes contenant une colonne.
     return list(connection.execute(statement).scalars().all())
+
+def get_plan_comparisons(
+    connection: Connection,
+    *,
+    observation_month: date,
+    plan: str | None = None,
+) -> list[dict]:
+    """Return represented plans in Basic, Standard, Premium order."""
+
+    # EN: Restrict observations to one month before grouping by plan.
+    # FR: Limiter les observations à un mois avant le regroupement.
+    statement = (
+        select(
+            customer_month.c.plan,
+            func.count().label("cohort_size"),
+            func.count()
+            .filter(customer_month.c.cancelled_in_month.is_(True))
+            .label("cancellation_count"),
+        )
+        .select_from(customer_month)
+        .where(
+            customer_month.c.observation_month == observation_month
+        )
+        .group_by(customer_month.c.plan)
+    )
+
+    # EN: Apply the same optional plan restriction as the summary.
+    # FR: Appliquer le même filtre facultatif que pour le résumé.
+    if plan is not None:
+        statement = statement.where(customer_month.c.plan == plan)
+
+    rows = connection.execute(statement).mappings().all()
+
+    # EN: Define the display order explicitly, independently of SQL row order.
+    # FR: Définir l'ordre d'affichage indépendamment de l'ordre SQL.
+    plan_order = {
+        "Basic": 0,
+        "Standard": 1,
+        "Premium": 2,
+    }
+
+    comparisons = []
+
+    for row in sorted(rows, key=lambda item: plan_order[item["plan"]]):
+        comparisons.append(
+            {
+                "plan": row["plan"],
+                "cohort_size": row["cohort_size"],
+                "cancellation_count": row["cancellation_count"],
+                "cancellation_rate": calculate_cancellation_rate(
+                    cohort_size=row["cohort_size"],
+                    cancellation_count=row["cancellation_count"],
+                ),
+            }
+        )
+
+    # EN: An empty scope returns no groups, not invented zero-rate plans.
+    # FR: Un périmètre vide ne crée aucun groupe avec un taux fictif.
+    return comparisons

@@ -176,3 +176,51 @@ section > p {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* EN: Keep comparison columns readable and scrollable on narrow screens.
+   FR: Garder les colonnes lisibles et défilables sur les petits écrans. */
+.comparison-table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.comparison-table-container:focus-visible {
+  outline: 3px solid #a45c00;
+  outline-offset: 3px;
+}
+
+.comparison-table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+}
+
+.comparison-table caption {
+  padding: 0 0 12px;
+  text-align: left;
+  line-height: 1.5;
+  color: #40516a;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 12px;
+  border-bottom: 1px solid #d6deeb;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.comparison-table thead th {
+  background: #edf3fc;
+  text-align: left;
+}
+
+.comparison-table tbody th {
+  text-align: left;
+}
+
+.comparison-table td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

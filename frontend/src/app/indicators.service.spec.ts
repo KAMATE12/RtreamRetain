@@ -194,4 +194,72 @@ describe('IndicatorsService', () => {
 
     expect(actual).toEqual(allPlans);
   });
+
+    it('requests all-plan comparisons and preserves the API group order', () => {
+    const expected = {
+      observation_month: '2026-09-01',
+      plan: null,
+      comparisons: [
+        {
+          plan: 'Basic',
+          cohort_size: 80,
+          cancellation_count: 8,
+          cancellation_rate: 10,
+        },
+        {
+          plan: 'Premium',
+          cohort_size: 20,
+          cancellation_count: 4,
+          cancellation_rate: 20,
+        },
+      ],
+    };
+
+    let actual: unknown;
+
+    service.getPlanComparisons('2026-09-01').subscribe((response) => {
+      actual = response;
+    });
+
+    const request = httpTesting.expectOne(
+      '/api/plan-comparisons?observation_month=2026-09-01'
+    );
+
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.has('plan')).toBe(false);
+
+    request.flush(expected);
+
+    expect(actual).toEqual(expected);
+  });
+
+  it('forwards the comparison plan and preserves an empty result', () => {
+    const expected = {
+      observation_month: '2026-10-01',
+      plan: 'Standard',
+      comparisons: [],
+    };
+
+    let actual: unknown;
+
+    service.getPlanComparisons('2026-10-01', 'Standard')
+      .subscribe((response) => {
+        actual = response;
+      });
+
+    const request = httpTesting.expectOne(
+      (candidate) => candidate.url === '/api/plan-comparisons'
+    );
+
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('observation_month'))
+      .toBe('2026-10-01');
+    expect(request.request.params.get('plan')).toBe('Standard');
+
+    request.flush(expected);
+
+    // EN: Preserve the empty list instead of inventing a zero-rate group.
+    // FR: Conserver la liste vide sans inventer un groupe avec un taux nul.
+    expect(actual).toEqual(expected);
+  });
 });

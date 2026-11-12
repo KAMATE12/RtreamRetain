@@ -1,4 +1,12 @@
-"""Test the indicator API using real PostgreSQL in an isolated schema."""
+"""
+EN: Verify indicators and plan comparisons using isolated PostgreSQL schemas.
+Create synthetic fixtures in test-only tables and remove only those tables.
+Check known calculations, filtering and preservation of stored observations.
+
+FR: Vérifier les indicateurs et comparaisons dans des schémas PostgreSQL isolés.
+Créer les données synthétiques dans les tables de test uniquement.
+Contrôler les calculs, les filtres et la conservation des observations.
+"""
 
 import os
 from datetime import date
@@ -286,3 +294,339 @@ def test_indicator_api_filters_plans_and_preserves_stored_data(
 
     assert customers_after == customers_before
     assert observations_after == observations_before
+
+def test_plan_comparisons_match_summary_and_preserve_data(isolated_engine):
+    """Verify unequal groups, month filtering, ordering and empty scopes."""
+
+    from app.indicators import (
+        get_monthly_indicators,
+        get_plan_comparisons,
+    )
+
+    september = date(2026, 9, 1)
+    october = date(2026, 10, 1)
+
+    customers = [
+        {"customer_id": f"C{number:06d}"}
+        for number in range(1, 101)
+    ]
+
+    observations = []
+
+    # EN: September contains 80 Basic customers and 20 Premium customers.
+    # FR: Septembre contient 80 clients Basic et 20 clients Premium.
+    for number in range(1, 101):
+        observations.append(
+            {
+                "customer_id": f"C{number:06d}",
+                "observation_month": september,
+                "plan": "Basic" if number <= 80 else "Premium",
+                "tenure_months": 0,
+                "viewing_hours": Decimal("10"),
+                "payment_failures": 0,
+                "support_requests": 0,
+                "cancelled_in_month": (
+                    number <= 8 or 81 <= number <= 84
+                ),
+            }
+        )
+
+    # EN: Insert October plans in a different order from the required display.
+    # FR: Insérer octobre dans un ordre différent de l'affichage attendu.
+    for number, plan in enumerate(
+        ["Premium", "Standard", "Basic"],
+        start=1,
+    ):
+        observations.append(
+            {
+                **observations[0],
+                "customer_id": f"C{number:06d}",
+                "observation_month": october,
+                "plan": plan,
+                "cancelled_in_month": False,
+            }
+        )
+
+    with isolated_engine.begin() as connection:
+        connection.execute(customer.insert(), customers)
+        connection.execute(customer_month.insert(), observations)
+
+    customers_query = select(customer).order_by(customer.c.customer_id)
+    observations_query = select(customer_month).order_by(
+        customer_month.c.customer_id,
+        customer_month.c.observation_month,
+    )
+
+    with isolated_engine.connect() as connection:
+        customers_before = connection.execute(customers_query).all()
+        observations_before = connection.execute(observations_query).all()
+
+        groups = get_plan_comparisons(
+            connection,
+            observation_month=september,
+        )
+        summary = get_monthly_indicators(
+            connection,
+            observation_month=september,
+        )
+
+        assert groups == [
+            {
+                "plan": "Basic",
+                "cohort_size": 80,
+                "cancellation_count": 8,
+                "cancellation_rate": 10.0,
+            },
+            {
+                "plan": "Premium",
+                "cohort_size": 20,
+                "cancellation_count": 4,
+                "cancellation_rate": 20.0,
+            },
+        ]
+
+        # EN: The overall rate uses combined counts, not average group rates.
+        # FR: Le taux global utilise les effectifs, pas la moyenne des taux.
+        assert summary["cohort_size"] == 100
+        assert summary["cancellation_count"] == 12
+        assert summary["cancellation_rate"] == pytest.approx(12.0)
+        assert summary["cancellation_rate"] != 15.0
+
+        assert sum(row["cohort_size"] for row in groups) == (
+            summary["cohort_size"]
+        )
+        assert sum(row["cancellation_count"] for row in groups) == (
+            summary["cancellation_count"]
+        )
+
+        # EN: Each single-plan comparison must agree with its summary.
+        # FR: Chaque comparaison filtrée doit correspondre à son résumé.
+        for expected_group in groups:
+            selected_plan = expected_group["plan"]
+
+            filtered_groups = get_plan_comparisons(
+                connection,
+                observation_month=september,
+                plan=selected_plan,
+            )
+            filtered_summary = get_monthly_indicators(
+                connection,
+                observation_month=september,
+                plan=selected_plan,
+            )
+
+            assert filtered_groups == [expected_group]
+
+            for field in (
+                "cohort_size",
+                "cancellation_count",
+                "cancellation_rate",
+            ):
+                assert filtered_groups[0][field] == filtered_summary[field]
+
+        # EN: October has different counts and all three plans in stable order.
+        # FR: Octobre a d'autres effectifs et les trois abonnements ordonnés.
+        october_groups = get_plan_comparisons(
+            connection,
+            observation_month=october,
+        )
+
+        assert october_groups == [
+            {
+                "plan": plan,
+                "cohort_size": 1,
+                "cancellation_count": 0,
+                "cancellation_rate": 0.0,
+            }
+            for plan in ["Basic", "Standard", "Premium"]
+        ]
+
+        # EN: An absent plan and an absent month both produce an empty list.
+        # FR: Un abonnement absent et un mois absent donnent une liste vide.
+        assert get_plan_comparisons(
+            connection,
+            observation_month=september,
+            plan="Standard",
+        ) == []
+
+        assert get_plan_comparisons(
+            connection,
+            observation_month=date(2026, 11, 1),
+        ) == []
+
+        empty_summary = get_monthly_indicators(
+            connection,
+            observation_month=september,
+            plan="Standard",
+        )
+
+        assert empty_summary["cohort_size"] == 0
+        assert empty_summary["cancellation_count"] == 0
+        assert empty_summary["cancellation_rate"] is None
+
+    # EN: Check every stored field again through a fresh connection.
+    # FR: Revérifier tous les champs stockés avec une nouvelle connexion.
+    with isolated_engine.connect() as connection:
+        assert connection.execute(customers_query).all() == customers_before
+        assert connection.execute(observations_query).all() == (
+            observations_before
+        )
+
+
+def test_plan_comparison_api_matches_summary_and_preserves_data(
+    isolated_engine,
+):
+    """Verify real HTTP comparisons and summaries in an isolated schema."""
+
+    september = date(2026, 9, 1)
+    october = date(2026, 10, 1)
+
+    customers = [
+        {"customer_id": f"C{number:06d}"}
+        for number in range(1, 101)
+    ]
+
+    # EN: Use unequal group sizes to distinguish 12% overall from 15%.
+    # FR: Utiliser des groupes inégaux pour distinguer 12 % de 15 %.
+    observations = [
+        {
+            "customer_id": f"C{number:06d}",
+            "observation_month": september,
+            "plan": "Basic" if number <= 80 else "Premium",
+            "tenure_months": 0,
+            "viewing_hours": Decimal("10"),
+            "payment_failures": 0,
+            "support_requests": 0,
+            "cancelled_in_month": (
+                number <= 8 or 81 <= number <= 84
+            ),
+        }
+        for number in range(1, 101)
+    ]
+
+    # EN: Add a different month with all plans, inserted in reverse order.
+    # FR: Ajouter un autre mois avec les abonnements dans l'ordre inverse.
+    for number, plan in enumerate(
+        ["Premium", "Standard", "Basic"],
+        start=1,
+    ):
+        observations.append(
+            {
+                **observations[0],
+                "customer_id": f"C{number:06d}",
+                "observation_month": october,
+                "plan": plan,
+                "cancelled_in_month": False,
+            }
+        )
+
+    with isolated_engine.begin() as connection:
+        connection.execute(customer.insert(), customers)
+        connection.execute(customer_month.insert(), observations)
+
+    customers_query = select(customer).order_by(customer.c.customer_id)
+    observations_query = select(customer_month).order_by(
+        customer_month.c.customer_id,
+        customer_month.c.observation_month,
+    )
+
+    with isolated_engine.connect() as connection:
+        customers_before = connection.execute(customers_query).all()
+        observations_before = connection.execute(observations_query).all()
+
+    basic = {
+        "plan": "Basic",
+        "cohort_size": 80,
+        "cancellation_count": 8,
+        "cancellation_rate": 10.0,
+    }
+    premium = {
+        "plan": "Premium",
+        "cohort_size": 20,
+        "cancellation_count": 4,
+        "cancellation_rate": 20.0,
+    }
+    october_groups = [
+        {
+            "plan": plan,
+            "cohort_size": 1,
+            "cancellation_count": 0,
+            "cancellation_rate": 0.0,
+        }
+        for plan in ["Basic", "Standard", "Premium"]
+    ]
+
+    # EN: Expected groups and totals are specified independently.
+    # FR: Définir indépendamment les groupes et les totaux attendus.
+    cases = [
+        ("2026-09-01", None, [basic, premium], 100, 12, 12.0),
+        ("2026-09-01", "Basic", [basic], 80, 8, 10.0),
+        ("2026-09-01", "Premium", [premium], 20, 4, 20.0),
+        ("2026-09-01", "Standard", [], 0, 0, None),
+        ("2026-10-01", None, october_groups, 3, 0, 0.0),
+        ("2026-10-01", "Standard", [october_groups[1]], 1, 0, 0.0),
+        ("2026-11-01", None, [], 0, 0, None),
+    ]
+
+    # EN: Replace only engine selection; HTTP handling and SQL remain real.
+    # FR: Remplacer uniquement le moteur ; HTTP et SQL restent réels.
+    with patch("app.main.get_engine", return_value=isolated_engine):
+        with TestClient(app) as client:
+            for month, plan, groups, count, cancellations, rate in cases:
+                params = {"observation_month": month}
+
+                if plan is not None:
+                    params["plan"] = plan
+
+                comparison_response = client.get(
+                    "/api/plan-comparisons",
+                    params=params,
+                )
+                summary_response = client.get(
+                    "/api/indicators",
+                    params=params,
+                )
+
+                assert comparison_response.status_code == 200
+                assert summary_response.status_code == 200
+
+                comparison = comparison_response.json()
+                summary = summary_response.json()
+
+                assert comparison == {
+                    "observation_month": month,
+                    "plan": plan,
+                    "comparisons": groups,
+                }
+
+                assert summary["observation_month"] == month
+                assert summary["cohort_size"] == count
+                assert summary["cancellation_count"] == cancellations
+
+                if rate is None:
+                    assert summary["cancellation_rate"] is None
+                    assert summary["average_viewing_hours"] is None
+                else:
+                    assert summary["cancellation_rate"] == pytest.approx(
+                        rate
+                    )
+
+                # EN: Group counts must reconcile with the same-scope summary.
+                # FR: Les effectifs des groupes doivent correspondre au résumé.
+                assert sum(
+                    group["cohort_size"]
+                    for group in comparison["comparisons"]
+                ) == summary["cohort_size"]
+
+                assert sum(
+                    group["cancellation_count"]
+                    for group in comparison["comparisons"]
+                ) == summary["cancellation_count"]
+
+    # EN: Verify all stored fields after requests through fresh connections.
+    # FR: Vérifier tous les champs stockés après les appels API.
+    with isolated_engine.connect() as connection:
+        assert connection.execute(customers_query).all() == customers_before
+        assert connection.execute(observations_query).all() == (
+            observations_before
+        )

@@ -5,6 +5,7 @@ Project: StreamRetain
 Tasks:
 - E3-02 — Angular monthly indicators dashboard, issue #19.
 - E3-03 — Observation-month and subscription-plan selectors, issue #20.
+- E3-04 — Subscription-plan comparisons, issue #21.
 
 Parent epic: #11 — Customer analysis dashboard.
 
@@ -29,7 +30,12 @@ Angular displays API results without recalculating the indicators.
 The cohort is assumed to contain customers active at the beginning
 of the month, including customers who requested cancellation during it.
 
-Plan comparisons belong to E3-04.
+E3-04 adds a subscription-plan comparison table using the same active
+month and plan selection as the summary indicators.
+
+The current E3-04 behavior and verification results are documented below.
+E3-02 and E3-03 test counts and browser observations remain historical
+evidence for those implementation stages.
 Activity filters, CSV upload and retention actions are outside this scope.
 
 ## Implementation
@@ -584,35 +590,287 @@ is inferred from this evidence.
 The screenshots do not establish a new dependency-audit result
 or resolution of previously documented maintenance findings.
 
-## Integration with E3-04
+## E3-04 — Subscription-plan comparisons
 
-The active month and plan are grouped in an `IndicatorSelection` object
-held by the indicator panel.
+### Implementation and API contract
 
-This task does not yet implement a shared application-wide selection
-service or the comparison view.
+The dashboard now displays a comparison table below the summary.
+Both sections reuse the panel's active `IndicatorSelection`.
+No application-wide selection service is introduced.
 
-E3-04 must reuse the active selection when integrating comparisons
-and verify that comparison results and summary indicators use
-the same filter scope.
+Backend aggregation is implemented in `backend/app/indicators.py`.
+The read-only route is implemented in `backend/app/main.py`:
+
+GET /api/plan-comparisons
+
+Query parameters:
+
+| Parameter | Required | Meaning |
+|---|---|---|
+| observation_month | Yes | ISO date representing the first day of the selected month |
+| plan | No | Basic, Standard or Premium, with exact capitalization |
+
+Omitting `plan` includes all represented subscription plans.
+The frontend omits this parameter when All plans is selected.
+
+Example response for a controlled test fixture:
+
+```json
+{
+  "observation_month": "2026-09-01",
+  "plan": null,
+  "comparisons": [
+    {
+      "plan": "Basic",
+      "cohort_size": 80,
+      "cancellation_count": 8,
+      "cancellation_rate": 10.0
+    },
+    {
+      "plan": "Premium",
+      "cohort_size": 20,
+      "cancellation_count": 4,
+      "cancellation_rate": 20.0
+    }
+  ]
+}
+
+```
+
+The response identifies the requested month and plan filter.
+A null plan means All plans.
+
+Each comparison contains:
+
+- `plan`: subscription plan at the beginning of the month.
+- `cohort_size`: beginning-of-month cohort customer count.
+- `cancellation_count`: customers who requested cancellation during the month.
+- `cancellation_rate`: cancellation count divided by cohort size, multiplied by 100.
+
+Cohort assumptions match those used for the summary indicators.
+
+Groups follow the stable order Basic, Standard, Premium.
+Only represented plans are returned.
+An empty scope returns `comparisons: []`, without invented zero-rate groups.
+
+Invalid month or plan parameters return HTTP 422.
+Configuration or database failures return HTTP 503 with a generic message.
+Raw database details and credentials are not exposed.
+
+Backend rates are not rounded for presentation.
+Angular displays up to two decimal places and appends the percent sign.
+
+### Coordinated loading, errors and retry
+
+This section supersedes the earlier single-indicator-request behavior.
+
+Each selection triggers two requests with identical month and plan filters:
+one for summary indicators and one for plan comparisons.
+
+RxJS `forkJoin` waits for both responses before displaying either section.
+Previous summary values and comparison rows are cleared during loading.
+
+If either request fails, both result sections remain hidden.
+The selected filters remain visible.
+Try again repeats both requests for the current selection.
+
+If initial month discovery fails, no selection exists yet.
+Retry therefore reloads the available months first.
+
+RxJS `switchMap` cancels the previous request pair when the selection changes.
+Obsolete responses cannot replace results for the current selection.
+Pending subscriptions are also cancelled when the panel is destroyed.
+
+An empty scope displays zero summary counts and "No data" for unavailable
+indicators, together with an explanatory comparison message and no rows.
+
+The two endpoints use separate database requests.
+Coordinated rendering does not guarantee a shared database snapshot
+if an import changes the data between those requests.
+
+### Known-dataset verification
+
+Isolated PostgreSQL fixtures use unequal group sizes:
+
+| Scope | Cohort size | Cancellation requests | Rate |
+|---|---:|---:|---:|
+| Basic | 80 | 8 | 10% |
+| Premium | 20 | 4 | 20% |
+| All plans | 100 | 12 | 12% |
+
+The overall rate is 12 / 100 × 100 = 12%.
+It is not the unweighted average of the two plan rates, which would be 15%.
+
+Integration tests verify grouped calculations and real HTTP responses,
+different months, single-plan filters, empty results and stable ordering.
+
+Group counts reconcile with the corresponding summary.
+Stored table contents are checked before and after the read operations.
+Database tests use isolated schemas and preserve working data.
+
+### Automated verification — November 12, 2026
+
+The complete backend suite was run from `backend` with
+`STREAMRETAIN_DB_TESTS=1`:
+
+```powershell
+..\.venv\Scripts\python.exe -m pytest
+```
+
+Observed result:
+
+- 202 tests passed.
+- No tests skipped.
+- Duration: 5.03 seconds.
+- One Starlette TestClient deprecation warning concerning httpx.
+
+A later run without the integration-test flag reported:
+
+- 170 tests passed.
+- 32 PostgreSQL tests skipped.
+- Duration: 2.53 seconds.
+- The same deprecation warning.
+
+The skipped tests in the later run do not replace the earlier
+successful verification with PostgreSQL enabled.
+
+Frontend command, executed from `frontend`:
+
+```powershell
+npm.cmd test -- --watch=false
+```
+
+Observed result:
+
+- 2 test files passed.
+- 8 service tests passed.
+- 15 component tests passed.
+- Total: 23 tests passed.
+- The first complete E3-04 run reported a Vitest duration of 4.76 seconds.
+- A subsequent run also reported 23 passing tests.
+
+Frontend coverage includes:
+
+- Summary and comparison request parameters.
+- Available months and default selections.
+- Known counts, rates and display rounding.
+- Single-plan filtering and return to All plans.
+- Preservation of the selected plan across month changes.
+- Empty results and measured zeros.
+- Waiting for both responses, whichever arrives first.
+- Failures from either endpoint and current-selection retry.
+- Removal of both result sections during loading and errors.
+- Cancellation of obsolete request pairs and destruction cleanup.
+
+Frontend tests use controlled HttpTestingController responses.
+They do not contact PostgreSQL or independently verify backend calculations.
+
+The testing backend rejects attempts to flush cancelled requests.
+This verifies cancellation-based protection rather than successful
+delivery of cancelled network responses.
+
+### Production build — November 12, 2026
+
+Command, executed from `frontend`:
+
+```powershell
+npm.cmd run build
+```
+
+Latest recorded result:
+
+- Production build succeeded.
+- Angular build duration: 4.276 seconds.
+- Initial bundle total: 240.23 kB.
+- Estimated transfer size: 65.77 kB.
+- Output: `frontend/dist/frontend`.
+- No warning appeared in the recorded build output.
+
+The earlier E3-04 build also succeeded, in 5.903 seconds,
+with the same recorded bundle sizes.
+
+### Browser observations — November 12, 2026
+
+Browser: Microsoft Edge on Windows.
+Application address: http://127.0.0.1:4200.
+
+For September 2026 with All plans selected, the table displayed:
+
+| Plan | Cohort size | Cancellation requests | Displayed rate |
+|---|---:|---:|---:|
+| Basic | 38 | 7 | 18.42% |
+| Standard | 19 | 3 | 15.79% |
+| Premium | 43 | 9 | 20.93% |
+
+The summary displayed 100 customers, 19 requests, 19% and 57.14 hours.
+
+The counts reconcile:
+
+- Cohort sizes: 38 + 19 + 43 = 100.
+- Cancellation requests: 7 + 3 + 9 = 19.
+- Overall rate: 19 / 100 × 100 = 19%.
+
+With Premium selected, the table displayed only the Premium row.
+Both sections displayed 43 customers, 9 requests and 20.93%.
+The summary also displayed 57.71 average viewing hours.
+
+A subsequent All plans capture showed all three groups again,
+in the documented order.
+
+Error-state screenshots show:
+
+- An initial failure without a selection or displayed results.
+- A failure with September 2026 and Premium still selected.
+- The generic error message and Try again button.
+- Both summary values and comparison rows hidden.
+
+The recovery screenshot shows Premium selected with matching summary
+and comparison results: 43 customers, 9 requests and 20.93%.
+
+Screenshots document visible states.
+Button-based retry and current-selection request behavior are also
+verified by automated tests.
+
+### Verification and interpretation limits
+
+Only September 2026 was available in the working database.
+Multiple months and empty scopes were verified using controlled fixtures.
+
+A separate manual network-timing check and a narrow-screen check
+of the new comparison table have not been recorded.
+
+Earlier E3-02 responsive evidence concerns the indicator layout,
+not the newly added comparison table.
+
+Group sizes are displayed alongside rates.
+A higher rate is a reason for investigation, not proof that
+the subscription plan caused cancellations.
+
+No statistical significance testing is implemented.
+All data is synthetic.
+These results do not establish actual IVI behavior, proven retention
+effectiveness or product usefulness.
 
 ## Completion status
 
-E3-02 is complete according to the recorded publication evidence
-and the project author's closure confirmation.
+E3-02 and E3-03 were published.
+The project author confirmed completion of their issue and board updates.
 
-E3-03 implementation, tests and documentation were committed
-and pushed in `f2b36ad`.
+E3-03 CI documentation was published in commit `6576041`,
+following implementation commit `f2b36ad`.
 
-Local frontend tests, the production build and GitHub Actions passed.
-Browser observations and verification limitations are recorded above.
+E3-04 implementation, local tests, production compilation and the browser
+observations described above are recorded.
 
-Remaining E3-03 completion work:
+Remaining E3-04 completion work:
 
-- Publish this documentation update containing the CI evidence.
-- Add implementation links, browser screenshots and verification
-  evidence to issue #20.
-- Review acceptance criteria against the recorded evidence.
-- Update issue #20, the project board and parent epic #11.
+- Review and commit implementation, tests and documentation.
+- Push the changes and record the corresponding GitHub Actions results.
+- Add implementation, documentation and verification evidence to issue #21.
+- Review acceptance criteria against the available evidence.
+- Update issue #21, the project board and parent epic #11.
+
+Earlier successful CI runs do not validate the unpublished E3-04 changes.
+No new dependency-audit result is claimed.
 
 Technical verification does not establish product validation.

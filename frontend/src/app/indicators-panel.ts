@@ -8,6 +8,9 @@
  * Charger les mois disponibles, conserver les filtres après une erreur
  * et annuler les demandes dépassées lors d'un changement de sélection.
  * Les valeurs affichées proviennent exclusivement des calculs du backend.
+ *
+ *EN: Load summary and comparisons together for the same active selection.
+ *FR: Charger e nsemble le résumé et les comparaisons pour la même sélection.
  */
 
 import {
@@ -20,13 +23,14 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, forkJoin, switchMap } from 'rxjs';
 
 import { IndicatorsService } from './indicators.service';
 import {
   IndicatorSelection,
   IndicatorsState,
   MonthlyIndicators,
+  PlanComparison,
   SubscriptionPlan,
 } from './indicators.models';
 
@@ -53,36 +57,48 @@ export class IndicatorsPanel implements OnInit {
   readonly selection = signal<IndicatorSelection | null>(null);
   readonly state = signal<IndicatorsState>('loading');
   readonly indicators = signal<MonthlyIndicators | null>(null);
+  readonly comparisons = signal<PlanComparison[]>([]);
 
   readonly planLabel = computed(
     () => this.selection()?.plan ?? 'All plans'
   );
 
   ngOnInit(): void {
-    // EN: Each new selection replaces the previous indicator request.
-    // FR: Chaque sélection remplace la demande d'indicateurs précédente.
+    // EN: Replace both requests whenever the active selection changes.
+    // FR: Remplacer les deux demandes à chaque changement de sélection.
     this.requests.pipe(
       switchMap((selection) => {
         this.indicators.set(null);
+        this.comparisons.set([]);
         this.state.set('loading');
 
-        return this.service.getMonthlyIndicators(
-          selection.observationMonth,
-          selection.plan,
-        ).pipe(
-          // EN: Catch errors inside switchMap so future selections still work.
-          // FR: Traiter l'erreur ici pour permettre les sélections suivantes.
+        // EN: Publish results only after both requests complete successfully.
+        // FR: Afficher les résultats après la réussite des deux demandes.
+        return forkJoin({
+          summary: this.service.getMonthlyIndicators(
+            selection.observationMonth,
+            selection.plan,
+          ),
+          comparison: this.service.getPlanComparisons(
+            selection.observationMonth,
+            selection.plan,
+          ),
+        }).pipe(
+          // EN: A failure hides both results but preserves the active filters.
+          // FR: Un échec masque les résultats et conserve les filtres actifs.
           catchError(() => {
             this.indicators.set(null);
+            this.comparisons.set([]);
             this.state.set('error');
             return EMPTY;
           }),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((result) => {
-      this.indicators.set(result);
-      this.state.set(result.cohort_size === 0 ? 'empty' : 'ready');
+    ).subscribe(({ summary, comparison }) => {
+      this.indicators.set(summary);
+      this.comparisons.set(comparison.comparisons);
+      this.state.set(summary.cohort_size === 0 ? 'empty' : 'ready');
     });
 
     this.loadAvailableMonths();

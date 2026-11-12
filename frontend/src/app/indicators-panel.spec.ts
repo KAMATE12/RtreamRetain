@@ -1,12 +1,11 @@
 /**
- * EN: Verify rendered filters and indicators using controlled HTTP responses.
- * Cover two months, multiple plans, empty results, retry, stale-value removal
- * and cancellation of obsolete requests. No real database is contacted.
+ * EN: Verify summary indicators and plan comparisons for the same selection.
+ * Use controlled HTTP responses to test unequal groups, filtering, loading,
+ * errors, retry and cancellation without contacting a real database.
  *
- * FR: Vérifier les filtres et indicateurs avec des réponses HTTP contrôlées.
- * Couvrir deux mois, plusieurs abonnements, les résultats vides, les erreurs,
- * les nouvelles tentatives et l'annulation des demandes dépassées.
- * Aucune base de données réelle n'est contactée.
+ * FR: Vérifier le résumé et les comparaisons pour une même sélection.
+ * Utiliser des réponses HTTP contrôlées pour tester les groupes inégaux,
+ * les filtres, le chargement, les erreurs et les annulations sans base réelle.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -20,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { IndicatorsPanel } from './indicators-panel';
 import {
   MonthlyIndicators,
+  PlanComparison,
   PlanSelection,
 } from './indicators.models';
 
@@ -32,30 +32,35 @@ describe('IndicatorsPanel', () => {
   const october = '2026-10-01';
   const monthsUrl = '/api/observation-months';
 
-  // EN: Expected responses are written explicitly, not recalculated by tests.
-  // FR: Les réponses attendues sont explicites, sans recalcul dans les tests.
   const septemberAll: MonthlyIndicators = {
     observation_month: september,
-    cohort_size: 4,
-    cancellation_count: 1,
-    cancellation_rate: 25,
-    average_viewing_hours: 30,
+    cohort_size: 100,
+    cancellation_count: 12,
+    cancellation_rate: 12,
+    average_viewing_hours: 57.1351,
   };
+
+  const septemberGroups: PlanComparison[] = [
+    {
+      plan: 'Basic',
+      cohort_size: 80,
+      cancellation_count: 8,
+      cancellation_rate: 10,
+    },
+    {
+      plan: 'Premium',
+      cohort_size: 20,
+      cancellation_count: 4,
+      cancellation_rate: 20,
+    },
+  ];
 
   const septemberBasic: MonthlyIndicators = {
     observation_month: september,
-    cohort_size: 2,
-    cancellation_count: 1,
-    cancellation_rate: 50,
-    average_viewing_hours: 20,
-  };
-
-  const septemberPremium: MonthlyIndicators = {
-    observation_month: september,
-    cohort_size: 2,
-    cancellation_count: 0,
-    cancellation_rate: 0,
-    average_viewing_hours: 40,
+    cohort_size: 80,
+    cancellation_count: 8,
+    cancellation_rate: 10,
+    average_viewing_hours: 50,
   };
 
   const octoberAll: MonthlyIndicators = {
@@ -66,20 +71,27 @@ describe('IndicatorsPanel', () => {
     average_viewing_hours: 10,
   };
 
+  const octoberGroups: PlanComparison[] = [
+    {
+      plan: 'Basic',
+      cohort_size: 1,
+      cancellation_count: 0,
+      cancellation_rate: 0,
+    },
+    {
+      plan: 'Premium',
+      cohort_size: 1,
+      cancellation_count: 1,
+      cancellation_rate: 100,
+    },
+  ];
+
   const octoberBasic: MonthlyIndicators = {
     observation_month: october,
     cohort_size: 1,
     cancellation_count: 0,
     cancellation_rate: 0,
     average_viewing_hours: 0,
-  };
-
-  const octoberPremium: MonthlyIndicators = {
-    observation_month: october,
-    cohort_size: 1,
-    cancellation_count: 1,
-    cancellation_rate: 100,
-    average_viewing_hours: 20,
   };
 
   beforeEach(async () => {
@@ -101,13 +113,23 @@ describe('IndicatorsPanel', () => {
     httpTesting.verify();
   });
 
+  function cleanText(node: Element): string {
+    return (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
   function text(): string {
-    return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
+    return cleanText(element);
   }
 
   function values(): string[] {
-    return Array.from(element.querySelectorAll('dd')).map(
-      (node) => (node.textContent ?? '').replace(/\s+/g, ' ').trim()
+    return Array.from(element.querySelectorAll('dd')).map(cleanText);
+  }
+
+  function rows(): string[][] {
+    return Array.from(
+      element.querySelectorAll('.comparison-table tbody tr')
+    ).map((row) =>
+      Array.from(row.querySelectorAll('th, td')).map(cleanText)
     );
   }
 
@@ -118,8 +140,8 @@ describe('IndicatorsPanel', () => {
   }
 
   function change(id: string, value: string): void {
-    // EN: Exercise the actual HTML control and its change event.
-    // FR: Utiliser le vrai contrôle HTML et son événement de changement.
+    // EN: Exercise the actual selector rather than calling its handler.
+    // FR: Utiliser le vrai sélecteur plutôt qu'appeler sa méthode.
     const control = select(id);
     control.value = value;
     control.dispatchEvent(new Event('change', { bubbles: true }));
@@ -133,28 +155,49 @@ describe('IndicatorsPanel', () => {
     fixture.detectChanges();
   }
 
-  function expectIndicators(month: string, plan: PlanSelection = null) {
-    const request = httpTesting.expectOne(
-      (candidate) =>
-        candidate.url === '/api/indicators' &&
-        candidate.params.get('observation_month') === month &&
-        candidate.params.get('plan') === plan
+  function pending(month: string, plan: PlanSelection = null) {
+    // EN: Both endpoints must receive exactly the same filter scope.
+    // FR: Les deux routes doivent recevoir exactement les mêmes filtres.
+    const summary = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/indicators' &&
+        request.params.get('observation_month') === month &&
+        request.params.get('plan') === plan
     );
-    expect(request.request.method).toBe('GET');
-    return request;
+
+    const comparison = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/plan-comparisons' &&
+        request.params.get('observation_month') === month &&
+        request.params.get('plan') === plan
+    );
+
+    expect(summary.request.method).toBe('GET');
+    expect(comparison.request.method).toBe('GET');
+
+    return { summary, comparison };
   }
 
   function respond(
-    result: MonthlyIndicators,
+    summary: MonthlyIndicators,
+    comparisons: PlanComparison[],
     plan: PlanSelection = null,
   ): void {
-    expectIndicators(result.observation_month, plan).flush(result);
+    const requests = pending(summary.observation_month, plan);
+
+    requests.summary.flush(summary);
+    requests.comparison.flush({
+      observation_month: summary.observation_month,
+      plan,
+      comparisons,
+    });
+
     fixture.detectChanges();
   }
 
   function initialize(): void {
     respondWithMonths();
-    respond(octoberAll);
+    respond(octoberAll, octoberGroups);
   }
 
   function retry(): void {
@@ -164,26 +207,7 @@ describe('IndicatorsPanel', () => {
     fixture.detectChanges();
   }
 
-  it('shows loading without measured values during both initial requests', () => {
-    expect(text()).toContain('Loading monthly indicators');
-    expect(values()).toEqual([]);
-
-    respondWithMonths();
-
-    expect(values()).toEqual([]);
-    expect(
-      element.querySelector('[aria-live]')?.getAttribute('aria-busy')
-    ).toBe('true');
-
-    respond(octoberAll);
-
-    expect(
-      element.querySelector('[aria-live]')?.getAttribute('aria-busy')
-    ).toBe('false');
-    expect(element.querySelector('[role="status"]')).toBeNull();
-  });
-
-  it('populates months and four plans with the documented defaults', () => {
+  it('populates months and plans with the documented defaults', () => {
     initialize();
 
     expect(
@@ -193,89 +217,136 @@ describe('IndicatorsPanel', () => {
     ).toEqual([october, september]);
 
     expect(
-      Array.from(select('subscription-plan').options).map(
-        (option) => option.textContent
-      )
+      Array.from(select('subscription-plan').options).map(cleanText)
     ).toEqual(['All plans', 'Basic', 'Standard', 'Premium']);
 
     expect(select('observation-month').value).toBe(october);
     expect(select('subscription-plan').value).toBe('');
     expect(values()).toEqual(['2', '1', '50%', '10 hours']);
-    expect(text()).toContain('Observation month: 2026-10');
-    expect(text()).toContain('Subscription plan: All plans');
+    expect(rows()).toEqual([
+      ['Basic', '1', '0', '0%'],
+      ['Premium', '1', '1', '100%'],
+    ]);
     expect(text()).toContain('Synthetic data only.');
     expect(text()).toContain(
-      'Associations do not establish causation or actual IVI behavior.'
+      'No statistical significance testing is implemented.'
     );
   });
 
-  it('rounds API values only for display', () => {
-    respondWithMonths();
-    respond({
-      ...octoberAll,
-      average_viewing_hours: 57.1351,
-    });
-
-    expect(values()).toEqual(['2', '1', '50%', '57.14 hours']);
-  });
-
-  it('requests another month and hides previous results while loading', () => {
+  it('displays 10% and 20% groups with a 12% combined summary', () => {
     initialize();
     change('observation-month', september);
+    respond(septemberAll, septemberGroups);
+
+    expect(values()).toEqual(['100', '12', '12%', '57.14 hours']);
+    expect(rows()).toEqual([
+      ['Basic', '80', '8', '10%'],
+      ['Premium', '20', '4', '20%'],
+    ]);
+
+    // EN: Reconcile displayed group counts with displayed summary counts.
+    // FR: Comparer les effectifs affichés des groupes à ceux du résumé.
+    const groupRows = rows();
+    expect(groupRows.reduce((sum, row) => sum + Number(row[1]), 0))
+      .toBe(Number(values()[0]));
+    expect(groupRows.reduce((sum, row) => sum + Number(row[2]), 0))
+      .toBe(Number(values()[1]));
+
+    expect(values()[2]).not.toBe('15%');
+    expect(cleanText(element.querySelector('caption')!))
+      .toContain('Observation month: 2026-09');
+  });
+
+  it.each(['summary', 'comparison'] as const)(
+    'waits for both results when %s arrives first',
+    (first) => {
+      expect(values()).toEqual([]);
+      expect(rows()).toEqual([]);
+
+      respondWithMonths();
+      const requests = pending(october);
+
+      const comparisonBody = {
+        observation_month: october,
+        plan: null,
+        comparisons: octoberGroups,
+      };
+
+      if (first === 'summary') {
+        requests.summary.flush(octoberAll);
+      } else {
+        requests.comparison.flush(comparisonBody);
+      }
+
+      fixture.detectChanges();
+
+      expect(values()).toEqual([]);
+      expect(rows()).toEqual([]);
+      expect(text()).toContain('Loading monthly indicators');
+      expect(
+        element.querySelector('[aria-live]')?.getAttribute('aria-busy')
+      ).toBe('true');
+
+      if (first === 'summary') {
+        requests.comparison.flush(comparisonBody);
+      } else {
+        requests.summary.flush(octoberAll);
+      }
+
+      fixture.detectChanges();
+
+      expect(values()).toHaveLength(4);
+      expect(rows()).toHaveLength(2);
+      expect(
+        element.querySelector('[aria-live]')?.getAttribute('aria-busy')
+      ).toBe('false');
+    }
+  );
+
+  it('filters both displays and restores all represented plans', () => {
+    initialize();
+    change('subscription-plan', 'Basic');
 
     expect(values()).toEqual([]);
+    expect(rows()).toEqual([]);
+
+    respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+
+    expect(values()).toEqual(['1', '0', '0%', '0 hours']);
+    expect(rows()).toEqual([['Basic', '1', '0', '0%']]);
+    expect(text()).not.toContain('No data');
+    expect(cleanText(element.querySelector('caption')!))
+      .toContain('Subscription plan: Basic');
+
+    change('subscription-plan', '');
+    respond(octoberAll, octoberGroups);
+
+    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(rows()).toHaveLength(2);
+    expect(cleanText(element.querySelector('caption')!))
+      .toContain('Subscription plan: All plans');
+  });
+
+  it('preserves the selected plan when changing month', () => {
+    initialize();
+    change('subscription-plan', 'Basic');
+    respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+
+    change('observation-month', september);
+
+    expect(select('subscription-plan').value).toBe('Basic');
+    expect(values()).toEqual([]);
+    expect(rows()).toEqual([]);
+
+    respond(septemberBasic, [septemberGroups[0]!], 'Basic');
+
+    expect(values()).toEqual(['80', '8', '10%', '50 hours']);
+    expect(rows()).toEqual([['Basic', '80', '8', '10%']]);
     expect(text()).toContain('Observation month: 2026-09');
-    expect(text()).toContain('Loading monthly indicators');
-
-    respond(septemberAll);
-
-    expect(values()).toEqual(['4', '1', '25%', '30 hours']);
     httpTesting.expectNone(monthsUrl);
   });
 
-  it('applies plan changes to all values and restores all-plan results', () => {
-    initialize();
-
-    change('subscription-plan', 'Premium');
-    respond(octoberPremium, 'Premium');
-    expect(values()).toEqual(['1', '1', '100%', '20 hours']);
-    expect(text()).toContain('Subscription plan: Premium');
-
-    change('subscription-plan', '');
-    respond(octoberAll);
-    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
-    expect(text()).toContain('Subscription plan: All plans');
-  });
-
-  it('preserves Basic when changing months and displays measured zeros', () => {
-    initialize();
-
-    change('subscription-plan', 'Basic');
-    respond(octoberBasic, 'Basic');
-    expect(values()).toEqual(['1', '0', '0%', '0 hours']);
-    expect(text()).not.toContain('No data');
-
-    change('observation-month', september);
-    expect(select('subscription-plan').value).toBe('Basic');
-
-    respond(septemberBasic, 'Basic');
-    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
-    expect(text()).toContain('Observation month: 2026-09');
-    expect(text()).toContain('Subscription plan: Basic');
-  });
-
-  it('displays the known Premium results for September', () => {
-    initialize();
-    change('observation-month', september);
-    respond(septemberAll);
-
-    change('subscription-plan', 'Premium');
-    respond(septemberPremium, 'Premium');
-
-    expect(values()).toEqual(['2', '0', '0%', '40 hours']);
-  });
-
-  it('keeps an absent plan selected and displays No data across months', () => {
+  it('shows an empty selection without inventing a zero-rate group', () => {
     initialize();
     change('subscription-plan', 'Standard');
 
@@ -285,138 +356,176 @@ describe('IndicatorsPanel', () => {
       cancellation_count: 0,
       cancellation_rate: null,
       average_viewing_hours: null,
-    }, 'Standard');
+    }, [], 'Standard');
 
-    expect(values()).toEqual(['0', '0', 'No data', 'No data']);
-    expect(text()).toContain(
-      'No observations are available for this month and plan selection.'
-    );
-
-    change('observation-month', september);
     expect(select('subscription-plan').value).toBe('Standard');
-
-    respond({
-      observation_month: september,
-      cohort_size: 0,
-      cancellation_count: 0,
-      cancellation_rate: null,
-      average_viewing_hours: null,
-    }, 'Standard');
-
     expect(values()).toEqual(['0', '0', 'No data', 'No data']);
-    expect(text()).toContain('Subscription plan: Standard');
+    expect(rows()).toEqual([]);
+    expect(element.querySelector('table')).toBeNull();
+    expect(text()).toContain(
+      'No subscription-plan observations are available for this selection.'
+    );
   });
 
-  it('does not request indicators when no observation months exist', () => {
+  it('does not request either result when no months exist', () => {
     httpTesting.expectOne(monthsUrl).flush({ observation_months: [] });
     fixture.detectChanges();
 
     httpTesting.expectNone(
-      (request) => request.url === '/api/indicators'
+      (request) =>
+        request.url === '/api/indicators' ||
+        request.url === '/api/plan-comparisons'
     );
+
     expect(element.querySelector('select')).toBeNull();
-    expect(text()).toContain('No observation months are available.');
     expect(values()).toEqual(['0', '0', 'No data', 'No data']);
+    expect(rows()).toEqual([]);
+    expect(text()).toContain('No observation months are available.');
   });
 
-  it('retries month discovery after its initial failure', () => {
+  it('retries available-month discovery after its failure', () => {
     httpTesting.expectOne(monthsUrl).flush(
-      { detail: 'INTERNAL_TEST_DETAIL' },
+      { detail: 'PRIVATE_DETAIL' },
       { status: 503, statusText: 'Service Unavailable' }
     );
     fixture.detectChanges();
 
-    expect(text()).not.toContain('INTERNAL_TEST_DETAIL');
+    expect(text()).not.toContain('PRIVATE_DETAIL');
     expect(element.querySelector('[role="alert"]')).not.toBeNull();
 
     retry();
     respondWithMonths();
-    respond(octoberAll);
+    respond(octoberAll, octoberGroups);
 
-    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(values()).toHaveLength(4);
+    expect(rows()).toHaveLength(2);
     expect(element.querySelector('[role="alert"]')).toBeNull();
   });
 
-  it('preserves filters after failure and retries the current selection', () => {
+  it.each(['summary', 'comparison'] as const)(
+    'hides both results and retries current filters after %s failure',
+    (failed) => {
+      initialize();
+      change('subscription-plan', 'Basic');
+
+      const requests = pending(october, 'Basic');
+      const other = failed === 'summary' ? 'comparison' : 'summary';
+
+      requests[failed].flush(
+        { detail: 'PRIVATE_DETAIL' },
+        { status: 503, statusText: 'Service Unavailable' }
+      );
+      fixture.detectChanges();
+
+      // EN: Failure of either request cancels its still-pending partner.
+      // FR: L'échec d'une demande annule l'autre si elle attend encore.
+      expect(requests[other].cancelled).toBe(true);
+      expect(values()).toEqual([]);
+      expect(rows()).toEqual([]);
+      expect(text()).not.toContain('PRIVATE_DETAIL');
+      expect(select('observation-month').value).toBe(october);
+      expect(select('subscription-plan').value).toBe('Basic');
+
+      retry();
+      httpTesting.expectNone(monthsUrl);
+      respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+
+      expect(values()).toEqual(['1', '0', '0%', '0 hours']);
+      expect(rows()).toEqual([['Basic', '1', '0', '0%']]);
+      expect(element.querySelector('[role="alert"]')).toBeNull();
+    }
+  );
+
+  it('hides a completed summary if the comparison subsequently fails', () => {
     initialize();
-    change('observation-month', september);
-    respond(septemberAll);
     change('subscription-plan', 'Basic');
+    const requests = pending(october, 'Basic');
 
-    expectIndicators(september, 'Basic').flush(
-      { detail: 'INTERNAL_TEST_DETAIL' },
-      { status: 503, statusText: 'Service Unavailable' }
-    );
-    fixture.detectChanges();
-
-    expect(values()).toEqual([]);
-    expect(select('observation-month').value).toBe(september);
-    expect(select('subscription-plan').value).toBe('Basic');
-    expect(text()).toContain('Subscription plan: Basic');
-    expect(text()).not.toContain('INTERNAL_TEST_DETAIL');
-
-    retry();
-    expect(values()).toEqual([]);
-    httpTesting.expectNone(monthsUrl);
-    respond(septemberBasic, 'Basic');
-
-    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
-    expect(element.querySelector('[role="alert"]')).toBeNull();
-    expect(element.querySelector('button')).toBeNull();
-  });
-
-  it('allows a different selection after a failed request', () => {
-    initialize();
-    change('subscription-plan', 'Basic');
-
-    expectIndicators(october, 'Basic').flush(
+    requests.summary.flush(octoberBasic);
+    requests.comparison.flush(
       {},
       { status: 503, statusText: 'Service Unavailable' }
     );
     fixture.detectChanges();
 
-    change('subscription-plan', 'Premium');
-    expect(element.querySelector('[role="alert"]')).toBeNull();
-    respond(octoberPremium, 'Premium');
+    expect(values()).toEqual([]);
+    expect(rows()).toEqual([]);
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
 
-    expect(values()).toEqual(['1', '1', '100%', '20 hours']);
+    // EN: A different selection must still work after the failure.
+    // FR: Une autre sélection doit rester possible après l'erreur.
+    change('subscription-plan', '');
+    respond(octoberAll, octoberGroups);
+
+    expect(values()).toEqual(['2', '1', '50%', '10 hours']);
+    expect(rows()).toHaveLength(2);
   });
 
-  it('cancels obsolete requests during rapid month and plan changes', () => {
+  it('cancels both obsolete requests during rapid selection changes', () => {
     respondWithMonths();
-    const initialRequest = expectIndicators(october);
+    const initial = pending(october);
 
     change('subscription-plan', 'Basic');
-    const basicRequest = expectIndicators(october, 'Basic');
+    const intermediate = pending(october, 'Basic');
 
-    expect(initialRequest.cancelled).toBe(true);
+    expect(initial.summary.cancelled).toBe(true);
+    expect(initial.comparison.cancelled).toBe(true);
 
     change('observation-month', september);
-    expect(basicRequest.cancelled).toBe(true);
+
+    expect(intermediate.summary.cancelled).toBe(true);
+    expect(intermediate.comparison.cancelled).toBe(true);
     expect(values()).toEqual([]);
+    expect(rows()).toEqual([]);
 
-    // EN: The latest request completes before the obsolete requests.
-    // FR: La dernière demande se termine avant les demandes dépassées.
-    respond(septemberBasic, 'Basic');
-    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+    respond(septemberBasic, [septemberGroups[0]!], 'Basic');
 
-    // EN: Angular's HTTP test backend refuses late delivery after cancellation.
-    // FR: Le simulateur HTTP refuse une réponse tardive après annulation.
-    expect(() => initialRequest.flush(octoberAll)).toThrow();
-    expect(() => basicRequest.flush(octoberBasic)).toThrow();
+    // EN: The HTTP test backend rejects late delivery after cancellation.
+    // FR: Le simulateur HTTP refuse les réponses tardives après annulation.
+    expect(() => initial.summary.flush(octoberAll)).toThrow();
+    expect(() => initial.comparison.flush({
+      observation_month: october,
+      plan: null,
+      comparisons: octoberGroups,
+    })).toThrow();
 
     fixture.detectChanges();
-    expect(values()).toEqual(['2', '1', '50%', '20 hours']);
+
+    expect(values()).toEqual(['80', '8', '10%', '50 hours']);
+    expect(rows()).toEqual([['Basic', '80', '8', '10%']]);
     expect(text()).toContain('Observation month: 2026-09');
     expect(text()).toContain('Subscription plan: Basic');
   });
 
-  it('cancels a pending indicator request when the panel is destroyed', () => {
+  it('discards a partially completed pair when the selection changes', () => {
     respondWithMonths();
-    const request = expectIndicators(october);
+    const initial = pending(october);
+
+    initial.comparison.flush({
+      observation_month: october,
+      plan: null,
+      comparisons: octoberGroups,
+    });
+    fixture.detectChanges();
+
+    expect(rows()).toEqual([]);
+
+    change('subscription-plan', 'Basic');
+    expect(initial.summary.cancelled).toBe(true);
+
+    respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+
+    expect(values()).toEqual(['1', '0', '0%', '0 hours']);
+    expect(rows()).toEqual([['Basic', '1', '0', '0%']]);
+  });
+
+  it('cancels both pending requests when the component is destroyed', () => {
+    respondWithMonths();
+    const requests = pending(october);
 
     fixture.destroy();
 
-    expect(request.cancelled).toBe(true);
+    expect(requests.summary.cancelled).toBe(true);
+    expect(requests.comparison.cancelled).toBe(true);
   });
 });
