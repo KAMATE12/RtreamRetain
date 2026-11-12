@@ -851,6 +851,49 @@ All data is synthetic.
 These results do not establish actual IVI behavior, proven retention
 effectiveness or product usefulness.
 
+## E3-04 publication and CI evidence
+
+The implementation, tests and verification documentation were committed
+and pushed in commit `766ef96`:
+
+`feat: compare subscription plans with coordinated dashboard filters`
+
+Evidence:
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/766ef96)
+- [Successful CI run](https://github.com/KAMATE12/RtreamRetain/actions/runs/43151108867)
+- [Backend logs](https://github.com/KAMATE12/RtreamRetain/actions/runs/43151108867/job/130960193939)
+- [Frontend logs](https://github.com/KAMATE12/RtreamRetain/actions/runs/43151108867/job/130960194233)
+
+The recorded build logs are dated November 12, 2026, in UTC.
+
+| Verification | Observed result |
+|---|---|
+| Backend job | Success, 14 seconds |
+| Frontend job | Success, 22 seconds |
+| Frontend dependency installation | npm ci succeeded |
+| Frontend test files | 2 passed |
+| Service tests | 8 passed |
+| Component tests | 15 passed |
+| Total frontend tests | 23 passed |
+| Production build | Succeeded |
+| Angular build duration | 3.676 seconds |
+| Initial bundle total | 240.23 kB |
+| Estimated transfer size | 65.77 kB |
+
+The backend CI log shows 202 collected tests and skipped PostgreSQL
+tests. This CI run must not be presented as a PostgreSQL integration run.
+
+The separate local execution with STREAMRETAIN_DB_TESTS=1 passed
+all 202 tests without skips, as documented above.
+
+The CI screenshots also show deprecation warnings, including the
+Starlette TestClient httpx warning and a Node.js punycode warning
+during action cleanup. These did not fail the jobs.
+
+No new dependency-audit result or resolution of existing maintenance
+findings is claimed.
+
 ## Completion status
 
 E3-02 and E3-03 were published.
@@ -859,18 +902,17 @@ The project author confirmed completion of their issue and board updates.
 E3-03 CI documentation was published in commit `6576041`,
 following implementation commit `f2b36ad`.
 
-E3-04 implementation, local tests, production compilation and the browser
-observations described above are recorded.
+E3-04 implementation, tests and documentation were published in `766ef96`.
+Local backend and frontend tests, production compilation and the
+corresponding GitHub Actions checks passed.
+
+Browser observations and verification limitations are recorded above.
 
 Remaining E3-04 completion work:
 
-- Review and commit implementation, tests and documentation.
-- Push the changes and record the corresponding GitHub Actions results.
-- Add implementation, documentation and verification evidence to issue #21.
-- Review acceptance criteria against the available evidence.
+- Publish this documentation update containing the CI evidence.
+- Add implementation, documentation and browser evidence to issue #21.
+- Review acceptance criteria against the recorded evidence.
 - Update issue #21, the project board and parent epic #11.
-
-Earlier successful CI runs do not validate the unpublished E3-04 changes.
-No new dependency-audit result is claimed.
 
 Technical verification does not establish product validation.
