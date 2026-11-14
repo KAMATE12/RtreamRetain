@@ -11,12 +11,13 @@ Document prepared: November 13, 2026
 The Sprint 3 task identifies Martin Kleppmann's
 Designing Data-Intensive Applications as the assigned book.
 
-The reading actually completed for the session recorded here was
-limited to the book's official presentation website.
+The completed reading includes three sections of the book's official
+presentation website and one section of a public article by the author.
+The exact scope of each session is recorded below.
 
 No complete book, chapter or edition-specific excerpt is claimed.
 
-## Reading session — November 12, 2026
+## Reading record 1 — Official DDIA presentation
 
 Source: [Official DDIA presentation](https://dataintensive.net/)
 
@@ -37,11 +38,11 @@ The student confirmed reading these three sections.
 
 ### Chronology
 
-This reading took place after implementation of the Sprint 3
-dashboard tasks #18–#21.
+The student confirms that this reading was completed before implementation.
+The exact reading date has not been recorded.
 
-It supported retrospective evaluation of existing decisions.
-It is not presented as the original basis for those decisions.
+An earlier AI-assisted draft incorrectly described the reading as occurring
+after implementation. This record corrects that chronology.
 
 ### Personal takeaway
 
@@ -63,8 +64,9 @@ to inspect subscription-plan counts and rates.
 Charts were not required for this task. The table shows exact values
 and denominators without introducing an additional visualization.
 
-The reading helped me evaluate this scope decision after implementation.
-I do not claim that it originally guided the choice.
+The reading helped me consider design trade-offs.
+The comparison table illustrates choosing a solution that meets the
+current need and remains understandable and maintainable.
 
 ### Remaining questions and next steps
 
@@ -134,7 +136,7 @@ A higher observed rate does not prove that a subscription plan
 caused cancellations.
 
 The appropriate response is to investigate possible explanations.
-The figures alone do not justify removing an abonnement or asserting
+The figures alone do not justify removing a subscription plan or asserting
 that a retention action will work.
 
 All StreamRetain observations are synthetic.
@@ -163,5 +165,71 @@ The learning record combines:
 No full-chapter reading, user research, statistical significance
 testing or product validation is claimed.
 
-Further substantive reading on the assigned technical topics remains
-to be completed and recorded before final submission.
+A second technical reading session is recorded below.
+Further reading on data models and analytical query patterns remains pending.
+
+## Reading record 2 — Efficiency and correctness
+
+Source: [How to do distributed locking](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)
+
+Author: Martin Kleppmann.
+Publication date: February 8, 2016.
+Resource type: public article on the author's website.
+Book edition: not applicable.
+
+Confirmed reading scope:
+the complete section "What are you using that lock for?",
+ending before "Protecting a resource with a lock".
+
+Full-article or book-chapter reading is not claimed.
+
+### Main idea and understanding
+
+The section distinguishes efficiency from correctness by examining
+the consequences of a lock failing.
+
+Efficiency concerns unnecessary work and resource use.
+Correctness concerns whether the system preserves the required behavior
+and produces valid results.
+
+During the guided discussion, I initially used "efficiency" to describe
+an import that creates duplicates. I then understood that incorrect
+duplication is a correctness problem, while unnecessary processing time
+with correct results is an efficiency problem.
+
+This summary was prepared with AI assistance from the student's answers.
+
+### Application to StreamRetain
+
+Reimporting the same CSV must not insert the same customer-month
+observations again.
+
+The previously recorded import verification showed:
+
+- Initial import: 100 inserted observations.
+- Identical reimport: 0 inserted and 100 unchanged observations.
+
+This is evidence about the correctness of repeated identical imports.
+It is not a performance benchmark or proof of all concurrent-import cases.
+
+A slow import with correct stored results would raise a separate
+efficiency question.
+
+This application is a project analogy. The article discusses distributed
+locks; it does not establish that StreamRetain needs such a lock.
+
+### Chronology and next steps
+
+The student confirms that this reading was completed before implementation.
+The exact reading date has not been recorded.
+
+The later guided discussion clarified the distinction between correctness
+and efficiency. The date of that discussion is not the reading date.
+
+No distributed locking feature was added.
+
+For future processing changes, identify correctness requirements before
+considering optimizations, then measure performance separately.
+
+Further reading on data models and analytical query patterns remains
+pending. No unread sections are claimed.

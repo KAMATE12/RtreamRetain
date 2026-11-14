@@ -4,13 +4,13 @@ Project: StreamRetain
 Student: Kamate Emmanuel
 Group: M80-103CB-26
 Sprint: November 2–15, 2026
-Report date: November 13, 2026
-Status: draft — demonstration and course submission pending
+Report updated: November 14, 2026
+Status: demonstration published and playback verified; course-chat submission pending
 
-## Sprint goal and outcome to date
+## Sprint goal and outcome
 
 The technical goal was to provide a dashboard for inspecting monthly
-customer indicators and comparing subscription plans using consistent
+customer indicators and comparing subscription plans using the same
 month and plan filters.
 
 The delivered application provides:
@@ -21,6 +21,12 @@ The delivered application provides:
 - A subscription-plan comparison API and table.
 - Coordinated summary and comparison loading.
 - Current-selection retry and obsolete-request cancellation.
+
+The English demonstration has been recorded and published on GitHub.
+The student verified the downloaded archive and video playback.
+The instructor approved the actual duration of 12 minutes 15 seconds.
+
+Course-chat submission remains pending.
 
 All observations are synthetic.
 Technical success does not establish product usefulness or actual
@@ -34,7 +40,7 @@ IVI customer behavior.
 | #19 — Angular indicators and interface states | Completed; closure confirmed by project author |
 | #20 — Month and subscription-plan filters | Completed; closure confirmed by project author |
 | #21 — Subscription-plan comparisons | Completed; closure confirmed by project author |
-| Sprint 3 learning, review and demonstration | In progress |
+| Sprint 3 learning, review and demonstration | In progress; demonstration published, course-chat submission pending |
 
 Activity-based filtering remains deferred under epic #11.
 Completion of this sprint does not automatically close the epic.
@@ -49,9 +55,11 @@ Detailed definitions, API fields, tests and browser observations:
 
 ### Local backend verification
 
-Executed from backend with STREAMRETAIN_DB_TESTS=1:
+Executed from `backend` with `STREAMRETAIN_DB_TESTS=1`:
 
-    ..\.venv\Scripts\python.exe -m pytest
+```powershell
+..\.venv\Scripts\python.exe -m pytest
+```
 
 Recorded on November 12, 2026:
 
@@ -74,9 +82,11 @@ The later run does not replace the successful integration run.
 
 ### Local frontend verification
 
-Executed from frontend:
+Executed from `frontend`:
 
-    npm.cmd test -- --watch=false
+```powershell
+npm.cmd test -- --watch=false
+```
 
 Recorded on November 12, 2026:
 
@@ -96,16 +106,18 @@ backend calculations.
 
 ### Local production compilation
 
-Executed from frontend:
+Executed from `frontend`:
 
-    npm.cmd run build
+```powershell
+npm.cmd run build
+```
 
 Latest recorded result on November 12, 2026:
 
 - Build succeeded in 4.276 seconds.
 - Initial bundle total: 240.23 kB.
 - Estimated transfer size: 65.77 kB.
-- Output: frontend/dist/frontend.
+- Output: `frontend/dist/frontend`.
 - No warning appeared in the recorded build output.
 
 ### GitHub Actions
@@ -154,8 +166,14 @@ Recorded on November 12, 2026.
 The summary displayed 100 customers, 19 requests, 19% and 57.14 hours.
 
 Group counts reconcile with the summary:
-38 + 19 + 43 = 100 customers;
-7 + 3 + 9 = 19 requests.
+
+- 38 + 19 + 43 = 100 customers.
+- 7 + 3 + 9 = 19 requests.
+
+The overall cancellation-request rate is calculated from combined counts:
+19 / 100 × 100 = 19%.
+
+It is not an unweighted average of the displayed plan rates.
 
 ### Single plan and return to All plans
 
@@ -193,7 +211,8 @@ against outdated responses.
 
 ## Limitations and remaining work
 
-- Only September 2026 was available for real-data browser checks.
+- Only September 2026 was available for browser checks using the
+  working synthetic dataset.
 - Changing between two stored months was not manually demonstrated.
 - The new comparison table has no recorded narrow-screen check.
 - No separate manual network-timing experiment is claimed.
@@ -202,25 +221,77 @@ against outdated responses.
 - No user research or product validation was performed.
 - No causation or statistical significance is established.
 - Activity-based filtering remains deferred.
-- Further technical reading remains pending.
-- The demonstration has not yet been recorded or submitted.
+- Further reading on data models and analytical queries remains future work.
+- The interface is a functional prototype and needs visual refinement.
+- The demonstration is published on GitHub; course-chat submission
+  remains pending.
 
-Existing passing checks will be retained as dated evidence.
+Existing passing checks are retained as dated evidence.
 Relevant checks must be repeated if implementation changes before delivery.
+
+### Proposed interface improvements
+
+The project author identified presentation issues in the current interface:
+a narrow content column on a large screen, substantial unused space,
+and technical connection information appearing before the main dashboard.
+
+Proposed improvements for future sprint planning include:
+
+- Improve the use of available screen width.
+- Make key indicators easier to identify and read.
+- Improve the visual hierarchy of filters, summary values and comparisons.
+- Move technical connection checks to a secondary area.
+- Verify the revised layout on narrow screens and with keyboard navigation.
+
+These are proposals, not completed improvements or a confirmed commitment
+for a particular future sprint.
 
 ## Reading and learning
 
 See [Sprint 3 reading notes](sprint-3-reading-notes.md).
 
-On November 12, the student confirmed reading three sections of
-the official DDIA presentation website.
+The completed reading includes:
 
-The reading occurred after implementation.
-It supported reflection on trade-offs and existing design decisions.
+- Three sections of the official DDIA presentation:
+  "Compare several designs", "Both theory and practice",
+  and "Deeper understanding".
+- The section "What are you using that lock for?" from Martin
+  Kleppmann's article "How to do distributed locking".
 
-No complete book or chapter reading is claimed.
-Guided explanations about data consistency and indicator interpretation
-are recorded separately from the reading itself.
+The student confirms that both readings preceded implementation.
+Exact reading dates have not been recorded.
+Earlier AI-assisted drafts incorrectly described them as
+post-implementation reading. This report corrects that chronology.
+
+The main takeaways concern design trade-offs and the distinction
+between correctness and efficiency.
+
+For StreamRetain, a comparison table provides exact counts and rates
+without requiring an additional visualization.
+
+Preventing duplicate customer-month observations during an identical
+reimport is a correctness requirement. Processing time and resource
+consumption are separate efficiency questions.
+
+The previously recorded import verification showed:
+
+- Initial import: 100 inserted observations.
+- Identical reimport: 0 inserted and 100 unchanged observations.
+
+These results are not a performance benchmark or proof of all
+concurrent-import cases.
+
+Guided discussions also clarified:
+
+- Waiting for both responses does not guarantee a shared database snapshot.
+- Cancellation counts and cancellation rates answer different questions.
+- An unavailable rate differs from a measured 0%.
+- A customer may have observations in different months without duplication.
+- Monthly calculations must select the requested observation month.
+- Synthetic associations do not establish causation.
+
+These discussions are distinguished from the source material actually read.
+No complete book, full chapter or full article reading is claimed.
 
 ## Retrospective
 
@@ -252,6 +323,10 @@ it was moved to the test file and the integration tests passed.
 Copying nested Markdown blocks also interrupted documentation work.
 The incomplete document was identified and completed before publication.
 
+The delivered interface supports the required workflow, but I am not
+satisfied with its visual presentation. Improving it should be planned
+alongside the remaining product work.
+
 ### Review of Sprint 2 improvement experiments
 
 | Experiment | Observed outcome |
@@ -268,11 +343,18 @@ The incomplete document was identified and completed before publication.
 2. Continue capturing evidence immediately, using descriptive filenames
    and recording the relevant command or scenario with each result.
 
-## English demonstration plan
+## English demonstration
 
-Target duration: 3–5 minutes, unless the instructor accepts another duration.
+The recording is complete and published:
 
-Planned sequence:
+[StreamRetain — Sprint 3 demonstration](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-3-demo)
+
+Original target duration: 3–5 minutes unless another duration is accepted.
+Actual duration: 12 minutes 15 seconds.
+Duration exception: the student confirms that the instructor approved
+this duration for Sprint 3.
+
+The preparation plan covered:
 
 1. Introduce StreamRetain, the retention manager and synthetic data.
 2. Show a known month's summary and explain the beginning-of-month cohort.
@@ -281,36 +363,65 @@ Planned sequence:
 5. Demonstrate error handling and retry.
 6. Explain empty data versus 0%, technical evidence and limitations.
 
-The working database currently has only one available month.
-The demo must acknowledge this rather than imply a manual multi-month check.
+The working dataset contains only one available month.
+Multiple-month and empty-scope verification comes from controlled tests,
+rather than a manual demonstration with multiple stored months.
 
-Any simulated empty state must be identified as simulated.
-Working data must not be erased for the demonstration.
+All observations are synthetic. They do not establish causation,
+statistical significance or proven retention effectiveness.
 
-The demo should explain that synthetic associations do not establish
-causation, statistical significance or proven retention effectiveness.
+### Publication and playback verification
+
+Published archive: `StreamRetain_Sprint3.zip`.
+
+The student reported an approximate archive size of 639 MB.
+
+The student confirmed:
+
+- Listening to the complete local recording and finding the audio intelligible.
+- Downloading the archive from the GitHub Release.
+- Extracting the downloaded archive.
+- Opening and successfully playing the published video.
+
+These checks establish the student's successful access to the published
+copy. They do not establish that the course-chat submission has occurred.
 
 ## Submission record
 
-Proposed submission: November 14, 2026, in the evening.
-Confirmation against the instructor's instructions: pending.
+Record updated: November 14, 2026.
+
+Proposed course-chat submission: November 14, 2026, in the evening.
+Confirmation of the submission timing against the instructor's
+instructions remains pending.
 
 Final board review target: November 15, 2026.
 
 | Item | Status |
 |---|---|
-| Demonstration recording | Pending |
-| Actual duration | Not recorded yet |
-| Accepted duration exception | Not recorded |
-| Demonstration location | Pending |
-| Access and playback verification | Pending |
+| Demonstration recording | Completed |
+| Actual duration | 12 minutes 15 seconds |
+| Accepted duration exception | Instructor approval confirmed by the student for Sprint 3 |
+| Demonstration location | GitHub Release: sprint-3-demo |
+| Published archive | StreamRetain_Sprint3.zip; approximately 639 MB, as reported by the student |
+| Access and playback verification | Student downloaded the published ZIP, extracted it and successfully played the video |
 | Course-chat submission | Pending |
-| Actual submission date | Not submitted yet |
+| Actual course-chat submission date | Not recorded; submission not yet confirmed |
 | Submission message link | Not available |
-| Publication of these two sprint documents | Pending |
+| Initial publication of the two sprint documents | Commit 20e6ccd |
+| Publication of the current corrections | Pending |
 
+Demonstration:
+[StreamRetain — Sprint 3](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-3-demo)
+
+Initial documentation publication:
+[20e6ccd](https://github.com/KAMATE12/RtreamRetain/commit/20e6ccd)
+
+The duration approval and playback checks are recorded from the student's
+confirmation. No written approval link is included in this record.
+
+GitHub publication does not replace submission in the course chat.
 The review, retrospective, reading takeaways and demonstration must
-be submitted before completion is claimed.
+be submitted before completion of the delivery task is claimed.
 
 Task and board statuses must reflect the actual delivery state.
 Epic #11 remains open while retained activity-filter work is deferred.
