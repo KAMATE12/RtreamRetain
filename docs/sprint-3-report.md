@@ -1,11 +1,16 @@
 # Sprint 3 — Review and retrospective
 
 Project: StreamRetain
+
 Student: Kamate Emmanuel
+
 Group: M80-103CB-26
+
 Sprint: November 2–15, 2026
+
 Report updated: November 14, 2026
-Status: demonstration published and playback verified; course-chat submission pending
+
+Status: demonstration and documents submitted; final issue and board review pending
 
 ## Sprint goal and outcome
 
@@ -26,7 +31,8 @@ The English demonstration has been recorded and published on GitHub.
 The student verified the downloaded archive and video playback.
 The instructor approved the actual duration of 12 minutes 15 seconds.
 
-Course-chat submission remains pending.
+The student confirmed submitting the demonstration, sprint review,
+retrospective and reading notes in the course chat on November 14, 2026.
 
 All observations are synthetic.
 Technical success does not establish product usefulness or actual
@@ -40,7 +46,7 @@ IVI customer behavior.
 | #19 — Angular indicators and interface states | Completed; closure confirmed by project author |
 | #20 — Month and subscription-plan filters | Completed; closure confirmed by project author |
 | #21 — Subscription-plan comparisons | Completed; closure confirmed by project author |
-| Sprint 3 learning, review and demonstration | In progress; demonstration published, course-chat submission pending |
+| Sprint 3 learning, review and demonstration | Materials submitted; final issue and board review pending |
 
 Activity-based filtering remains deferred under epic #11.
 Completion of this sprint does not automatically close the epic.
@@ -152,7 +158,9 @@ dependency-audit findings.
 ## Integrated dashboard observations
 
 Browser: Microsoft Edge on Windows.
+
 Application: http://127.0.0.1:4200.
+
 Recorded on November 12, 2026.
 
 ### All plans — September 2026
@@ -223,11 +231,11 @@ against outdated responses.
 - Activity-based filtering remains deferred.
 - Further reading on data models and analytical queries remains future work.
 - The interface is a functional prototype and needs visual refinement.
-- The demonstration is published on GitHub; course-chat submission
-  remains pending.
+- The demonstration and documents have been submitted.
+  Final issue and board review remains pending.
 
 Existing passing checks are retained as dated evidence.
-Relevant checks must be repeated if implementation changes before delivery.
+Future implementation changes require appropriate verification.
 
 ### Proposed interface improvements
 
@@ -350,7 +358,9 @@ The recording is complete and published:
 [StreamRetain — Sprint 3 demonstration](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-3-demo)
 
 Original target duration: 3–5 minutes unless another duration is accepted.
+
 Actual duration: 12 minutes 15 seconds.
+
 Duration exception: the student confirms that the instructor approved
 this duration for Sprint 3.
 
@@ -384,17 +394,19 @@ The student confirmed:
 - Opening and successfully playing the published video.
 
 These checks establish the student's successful access to the published
-copy. They do not establish that the course-chat submission has occurred.
+copy. Course-chat submission was separately confirmed by the student
+on November 14, 2026.
 
 ## Submission record
 
 Record updated: November 14, 2026.
 
-Proposed course-chat submission: November 14, 2026, in the evening.
-Confirmation of the submission timing against the instructor's
-instructions remains pending.
+The student confirmed submitting the demonstration, sprint review,
+retrospective and reading takeaways in the course chat on
+November 14, 2026.
 
 Final board review target: November 15, 2026.
+Final issue and board review has not yet been confirmed.
 
 | Item | Status |
 |---|---|
@@ -404,11 +416,13 @@ Final board review target: November 15, 2026.
 | Demonstration location | GitHub Release: sprint-3-demo |
 | Published archive | StreamRetain_Sprint3.zip; approximately 639 MB, as reported by the student |
 | Access and playback verification | Student downloaded the published ZIP, extracted it and successfully played the video |
-| Course-chat submission | Pending |
-| Actual course-chat submission date | Not recorded; submission not yet confirmed |
-| Submission message link | Not available |
+| Course-chat submission | Completed; confirmed by the student |
+| Actual course-chat submission date | November 14, 2026 |
+| Submission message link | Not recorded |
 | Initial publication of the two sprint documents | Commit 20e6ccd |
-| Publication of the current corrections | Pending |
+| Reading chronology corrections and demonstration evidence | Published in commit c14e6df |
+| Final submission record | Added in this documentation update |
+| Final issue and board review | Pending |
 
 Demonstration:
 [StreamRetain — Sprint 3](https://github.com/KAMATE12/RtreamRetain/releases/tag/sprint-3-demo)
@@ -416,12 +430,13 @@ Demonstration:
 Initial documentation publication:
 [20e6ccd](https://github.com/KAMATE12/RtreamRetain/commit/20e6ccd)
 
-The duration approval and playback checks are recorded from the student's
-confirmation. No written approval link is included in this record.
+Reading chronology corrections and demonstration evidence:
+[c14e6df](https://github.com/KAMATE12/RtreamRetain/commit/c14e6df)
 
-GitHub publication does not replace submission in the course chat.
-The review, retrospective, reading takeaways and demonstration must
-be submitted before completion of the delivery task is claimed.
+The duration approval, playback checks and course-chat submission
+are recorded from the student's confirmation.
+No written approval link or course-chat message link is included
+in this record.
 
 Task and board statuses must reflect the actual delivery state.
 Epic #11 remains open while retained activity-filter work is deferred.
