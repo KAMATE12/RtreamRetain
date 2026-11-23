@@ -6,7 +6,8 @@ Task: E4-01 — Transparent suggestion rules, issue #23
 
 Sprint: Sprint 4 — November 16–29, 2026
 
-Status: implemented and locally verified; publication and CI evidence pending.
+Status: implemented, locally verified and published; GitHub Actions passed.
+Final acceptance review and issue closure remain pending.
 
 ## Purpose
 
@@ -392,14 +393,49 @@ The current header still says Sprint 3.
 Updating the header and refining the layout remain tracked under
 S4-04, issue #26.
 
-## Remaining completion work
+## Completion tracking
 
-- Review and publish the implementation, tests and this documentation.
-- Record the corresponding GitHub Actions run.
-- Review issue #23 acceptance criteria against the available evidence.
-- Update issue #23 and the project board after that review.
+The implementation is published. Publication links, CI results and
+remaining completion steps are recorded in the next section,
+"Publication and CI evidence".
 
 Action creation and listing remain under issue #24.
 Status updates and persistence remain under issue #25.
 
 Technical verification does not establish product validation.
+
+## Publication and CI evidence
+
+The implementation, tests and documentation were published in commit
+`9940b46`: `feat: add transparent monthly retention suggestions`.
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/9940b46)
+- [Successful GitHub Actions run](https://github.com/KAMATE12/RtreamRetain/actions/runs/45290687054)
+
+The workflow summary shows:
+
+| Check | Observed result |
+|---|---|
+| Overall workflow | Success |
+| Backend job | Success, 15 seconds |
+| Frontend job | Success, 18 seconds |
+| Frontend test files | 2 passed |
+| Frontend tests | 34 passed |
+| Total workflow duration | 21 seconds |
+
+The workflow summary does not show backend test counts or PostgreSQL
+integration configuration. It is not evidence that PostgreSQL integration
+tests ran in CI.
+
+The separate local backend execution with STREAMRETAIN_DB_TESTS=1
+passed all 233 tests without skips, with one deprecation warning.
+
+Remaining completion work:
+
+- Publish this documentation update.
+- Review issue #23 acceptance criteria against the recorded evidence.
+- Close issue #23 and mark its project card Done if all criteria are met.
+
+Action creation and listing remain separate work under issue #24.
+Status updates and persistence verification remain under issue #25.
+Epic #12 remains open.
