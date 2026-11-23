@@ -20,6 +20,7 @@ import {
   ObservationMonthsResponse,
   PlanComparisonsResponse,
   PlanSelection,
+  RetentionSuggestionsResponse,
 } from './indicators.models';
 
 @Injectable({
@@ -75,6 +76,28 @@ export class IndicatorsService {
 
     return this.http.get<PlanComparisonsResponse>(
       '/api/plan-comparisons',
+      { params },
+    );
+  }
+
+    getRetentionSuggestions(
+    observationMonth: string,
+    plan: PlanSelection = null,
+  ): Observable<RetentionSuggestionsResponse> {
+    // EN: Send the active selection; the backend keeps the global reference.
+    // FR: Envoyer la sélection ; le backend conserve la référence globale.
+    const params: Record<string, string> = {
+      observation_month: observationMonth,
+    };
+
+    // EN: Omit the plan parameter for All plans.
+    // FR: Omettre le paramètre d'abonnement pour All plans.
+    if (plan !== null) {
+      params['plan'] = plan;
+    }
+
+    return this.http.get<RetentionSuggestionsResponse>(
+      '/api/retention-suggestions',
       { params },
     );
   }

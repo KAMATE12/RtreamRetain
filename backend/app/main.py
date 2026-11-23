@@ -13,6 +13,7 @@ from datetime import date
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from app.suggestions import build_plan_suggestions
 
 from app.database import get_engine
 from app.indicators import (
@@ -212,3 +213,57 @@ def plan_comparisons(
         "plan": plan,
         "comparisons": comparisons,
     }
+
+@app.get("/api/retention-suggestions")
+def retention_suggestions(
+    observation_month: date,
+    plan: str | None = None,
+):
+    """Return investigation proposals with an all-plan monthly reference."""
+
+    # EN: Validate the month before accessing the database.
+    # FR: Valider le mois avant d'accéder à la base.
+    if observation_month.day != 1:
+        raise HTTPException(
+            status_code=422,
+            detail="observation_month must be the first day of the month",
+        )
+
+    # EN: Reject unsupported plans before database access.
+    # FR: Refuser les abonnements non acceptés avant l'accès à la base.
+    if plan is not None and plan not in ("Basic", "Standard", "Premium"):
+        raise HTTPException(
+            status_code=422,
+            detail="plan must be Basic, Standard or Premium",
+        )
+
+    try:
+        engine = get_engine()
+    except ValueError:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to load retention suggestions",
+        ) from None
+
+    try:
+        with engine.connect() as connection:
+            # EN: Read all plans once to preserve the global reference.
+            # FR: Lire tous les abonnements pour conserver la référence globale.
+            comparisons = get_plan_comparisons(
+                connection,
+                observation_month=observation_month,
+                plan=None,
+            )
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to load retention suggestions",
+        ) from None
+
+    # EN: Restrict suggestions only after calculating the global reference.
+    # FR: Restreindre les suggestions après calcul de la référence globale.
+    return build_plan_suggestions(
+        comparisons,
+        observation_month=observation_month,
+        plan=plan,
+    )

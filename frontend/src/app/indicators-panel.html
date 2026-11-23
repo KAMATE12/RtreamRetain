@@ -56,12 +56,12 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
 
   <div aria-live="polite" [attr.aria-busy]="state() === 'loading'">
     @if (state() === 'loading') {
-      <p role="status">Loading monthly indicators…</p>
+      <p role="status">Loading monthly indicators, comparisons and suggestions…</p>
     }
 
     @if (state() === 'error') {
       <p role="alert">
-        Unable to load the indicators. Please try again.
+        Unable to load the dashboard results. Please try again.
       </p>
       <button type="button" (click)="loadIndicators()">
         Try again
@@ -149,6 +149,62 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
               }
             </tbody>
           </table>
+        </div>
+      }
+
+      @if (suggestionResponse(); as response) {
+        <div class="suggestions" aria-labelledby="suggestions-title">
+          <h3 id="suggestions-title">Retention investigation suggestions</h3>
+
+          <p>
+            These suggestions are proposals, not proven solutions.
+            No action is saved automatically.
+          </p>
+
+          <p class="suggestion-reference">
+            <strong>Reference: all plans for
+              {{ response.observation_month.slice(0, 7) }}.</strong>
+            {{ response.reference.cancellation_count }} cancellation requests
+            among {{ response.reference.cohort_size }} customers.
+            Overall cancellation-request rate:
+            @if (response.reference.cancellation_rate != null) {
+              {{ response.reference.cancellation_rate | number:'1.0-2' }}%.
+            } @else {
+              No data.
+            }
+          </p>
+
+          @if (response.reference.cohort_size === 0) {
+            <p>No monthly observations are available to evaluate this rule.</p>
+          } @else if (state() === 'empty') {
+            <p>
+              No observations are available for the selected plan.
+              No suggestion can be evaluated for this selection.
+            </p>
+          } @else if (response.suggestions.length === 0) {
+            <p>
+              No subscription plan in this selection meets the rule.
+              This does not mean that no retention problem exists.
+            </p>
+          } @else {
+            @for (suggestion of response.suggestions; track suggestion.plan) {
+              <article class="suggestion-card">
+                <h4>{{ suggestion.plan }} — Investigation proposal</h4>
+
+                <p><strong>{{ suggestion.proposed_action }}</strong></p>
+
+                <p>
+                  <strong>Why this proposal?</strong>
+                  {{ suggestion.rationale }}
+                </p>
+
+                <p class="suggestion-rule">
+                  Rule: {{ suggestion.rule_id }}
+                  · Version: {{ suggestion.rule_version }}
+                </p>
+              </article>
+            }
+          }
         </div>
       }
 

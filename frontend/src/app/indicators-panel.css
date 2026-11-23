@@ -224,3 +224,36 @@ section > p {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* EN: Separate investigation proposals from measured indicators.
+   FR: Séparer les propositions d'investigation des indicateurs mesurés. */
+.suggestions {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 2px solid #d6deeb;
+}
+
+.suggestion-reference {
+  padding: 12px;
+  background: #edf3fc;
+  border-radius: 6px;
+}
+
+.suggestion-card {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #d6deeb;
+  border-left: 4px solid #244887;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.suggestion-card h4 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.suggestion-rule {
+  font-size: 14px;
+  color: #40516a;
+}

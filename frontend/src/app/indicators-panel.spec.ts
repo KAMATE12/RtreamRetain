@@ -21,6 +21,7 @@ import {
   MonthlyIndicators,
   PlanComparison,
   PlanSelection,
+  RetentionSuggestionsResponse,
 } from './indicators.models';
 
 describe('IndicatorsPanel', () => {
@@ -155,9 +156,40 @@ describe('IndicatorsPanel', () => {
     fixture.detectChanges();
   }
 
-  function pending(month: string, plan: PlanSelection = null) {
-    // EN: Both endpoints must receive exactly the same filter scope.
-    // FR: Les deux routes doivent recevoir exactement les mêmes filtres.
+    function suggestionBody(
+    month: string,
+    plan: PlanSelection = null,
+  ): RetentionSuggestionsResponse {
+    const isSeptember = month === september;
+    const represented = plan === null || plan === 'Premium';
+
+    return {
+      observation_month: month,
+      plan,
+      reference: {
+        scope: 'all_plans',
+        cohort_size: isSeptember ? 100 : 2,
+        cancellation_count: isSeptember ? 12 : 1,
+        cancellation_rate: isSeptember ? 12 : 50,
+      },
+      suggestions: represented
+        ? [{
+            rule_id: 'PLAN_RATE_ABOVE_OVERALL',
+            rule_version: 1,
+            plan: 'Premium',
+            cohort_size: isSeptember ? 20 : 1,
+            cancellation_count: isSeptember ? 4 : 1,
+            cancellation_rate: isSeptember ? 20 : 100,
+            proposed_action: 'Investigate Premium cancellation requests.',
+            rationale: isSeptember
+              ? '4 of 20 customers, compared with 12 of 100 overall.'
+              : '1 of 1 customer, compared with 1 of 2 overall.',
+          }]
+        : [],
+    };
+  }
+
+    function pending(month: string, plan: PlanSelection = null) {
     const summary = httpTesting.expectOne(
       (request) =>
         request.url === '/api/indicators' &&
@@ -172,10 +204,18 @@ describe('IndicatorsPanel', () => {
         request.params.get('plan') === plan
     );
 
+    const suggestions = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/retention-suggestions' &&
+        request.params.get('observation_month') === month &&
+        request.params.get('plan') === plan
+    );
+
     expect(summary.request.method).toBe('GET');
     expect(comparison.request.method).toBe('GET');
+    expect(suggestions.request.method).toBe('GET');
 
-    return { summary, comparison };
+    return { summary, comparison, suggestions };
   }
 
   function respond(
@@ -191,10 +231,12 @@ describe('IndicatorsPanel', () => {
       plan,
       comparisons,
     });
+    requests.suggestions.flush(
+      suggestionBody(summary.observation_month, plan)
+    );
 
     fixture.detectChanges();
   }
-
   function initialize(): void {
     respondWithMonths();
     respond(octoberAll, octoberGroups);
@@ -257,46 +299,46 @@ describe('IndicatorsPanel', () => {
       .toContain('Observation month: 2026-09');
   });
 
-  it.each(['summary', 'comparison'] as const)(
-    'waits for both results when %s arrives first',
-    (first) => {
-      expect(values()).toEqual([]);
-      expect(rows()).toEqual([]);
-
+  it.each(['summary', 'comparison', 'suggestions'] as const)(
+    'waits for all results when %s arrives last',
+    (last) => {
       respondWithMonths();
       const requests = pending(october);
 
-      const comparisonBody = {
-        observation_month: october,
-        plan: null,
-        comparisons: octoberGroups,
+      const flush = {
+        summary: () => requests.summary.flush(octoberAll),
+        comparison: () => requests.comparison.flush({
+          observation_month: october,
+          plan: null,
+          comparisons: octoberGroups,
+        }),
+        suggestions: () => requests.suggestions.flush(
+          suggestionBody(october)
+        ),
       };
 
-      if (first === 'summary') {
-        requests.summary.flush(octoberAll);
-      } else {
-        requests.comparison.flush(comparisonBody);
+      for (const key of ['summary', 'comparison', 'suggestions'] as const) {
+        if (key !== last) {
+          flush[key]();
+        }
       }
 
       fixture.detectChanges();
 
       expect(values()).toEqual([]);
       expect(rows()).toEqual([]);
+      expect(element.querySelector('.suggestion-card')).toBeNull();
       expect(text()).toContain('Loading monthly indicators');
       expect(
         element.querySelector('[aria-live]')?.getAttribute('aria-busy')
       ).toBe('true');
 
-      if (first === 'summary') {
-        requests.comparison.flush(comparisonBody);
-      } else {
-        requests.summary.flush(octoberAll);
-      }
-
+      flush[last]();
       fixture.detectChanges();
 
       expect(values()).toHaveLength(4);
       expect(rows()).toHaveLength(2);
+      expect(element.querySelectorAll('.suggestion-card')).toHaveLength(1);
       expect(
         element.querySelector('[aria-live]')?.getAttribute('aria-busy')
       ).toBe('false');
@@ -374,7 +416,8 @@ describe('IndicatorsPanel', () => {
     httpTesting.expectNone(
       (request) =>
         request.url === '/api/indicators' ||
-        request.url === '/api/plan-comparisons'
+        request.url === '/api/plan-comparisons' ||
+        request.url === '/api/retention-suggestions'
     );
 
     expect(element.querySelector('select')).toBeNull();
@@ -402,14 +445,12 @@ describe('IndicatorsPanel', () => {
     expect(element.querySelector('[role="alert"]')).toBeNull();
   });
 
-  it.each(['summary', 'comparison'] as const)(
-    'hides both results and retries current filters after %s failure',
+  it.each(['summary', 'comparison', 'suggestions'] as const)(
+    'hides all results and retries current filters after %s failure',
     (failed) => {
       initialize();
       change('subscription-plan', 'Basic');
-
       const requests = pending(october, 'Basic');
-      const other = failed === 'summary' ? 'comparison' : 'summary';
 
       requests[failed].flush(
         { detail: 'PRIVATE_DETAIL' },
@@ -417,11 +458,17 @@ describe('IndicatorsPanel', () => {
       );
       fixture.detectChanges();
 
-      // EN: Failure of either request cancels its still-pending partner.
-      // FR: L'échec d'une demande annule l'autre si elle attend encore.
-      expect(requests[other].cancelled).toBe(true);
+      for (const key of ['summary', 'comparison', 'suggestions'] as const) {
+        if (key !== failed) {
+          expect(requests[key].cancelled).toBe(true);
+        }
+      }
+
       expect(values()).toEqual([]);
       expect(rows()).toEqual([]);
+      expect(element.querySelector('.suggestion-card')).toBeNull();
+      expect(element.querySelector('.suggestion-reference')).toBeNull();
+      expect(element.querySelector('[role="alert"]')).not.toBeNull();
       expect(text()).not.toContain('PRIVATE_DETAIL');
       expect(select('observation-month').value).toBe(october);
       expect(select('subscription-plan').value).toBe('Basic');
@@ -432,10 +479,12 @@ describe('IndicatorsPanel', () => {
 
       expect(values()).toEqual(['1', '0', '0%', '0 hours']);
       expect(rows()).toEqual([['Basic', '1', '0', '0%']]);
+      expect(text()).toContain(
+        'No subscription plan in this selection meets the rule.'
+      );
       expect(element.querySelector('[role="alert"]')).toBeNull();
     }
   );
-
   it('hides a completed summary if the comparison subsequently fails', () => {
     initialize();
     change('subscription-plan', 'Basic');
@@ -519,7 +568,7 @@ describe('IndicatorsPanel', () => {
     expect(rows()).toEqual([['Basic', '1', '0', '0%']]);
   });
 
-  it('cancels both pending requests when the component is destroyed', () => {
+  it('cancels all pending requests when the component is destroyed', () => {
     respondWithMonths();
     const requests = pending(october);
 
@@ -527,5 +576,86 @@ describe('IndicatorsPanel', () => {
 
     expect(requests.summary.cancelled).toBe(true);
     expect(requests.comparison.cancelled).toBe(true);
+    expect(requests.suggestions.cancelled).toBe(true);
+  });
+
+    it('shows the global reference when Premium is selected', () => {
+    initialize();
+    change('observation-month', september);
+    respond(septemberAll, septemberGroups);
+
+    change('subscription-plan', 'Premium');
+
+    expect(element.querySelector('.suggestion-card')).toBeNull();
+    expect(element.querySelector('.suggestion-reference')).toBeNull();
+
+    respond({
+      observation_month: september,
+      cohort_size: 20,
+      cancellation_count: 4,
+      cancellation_rate: 20,
+      average_viewing_hours: 60,
+    }, [septemberGroups[1]!], 'Premium');
+
+    // EN: The summary is filtered, but the reference includes all plans.
+    // FR: Le résumé est filtré, mais la référence inclut tous les abonnements.
+    expect(values()).toEqual(['20', '4', '20%', '60 hours']);
+
+    const reference = cleanText(
+      element.querySelector('.suggestion-reference')!
+    );
+    expect(reference).toContain('Reference: all plans for 2026-09.');
+    expect(reference).toContain('12 cancellation requests among 100 customers');
+    expect(reference).toContain('12%');
+
+    const card = cleanText(element.querySelector('.suggestion-card')!);
+    expect(card).toContain('Investigate Premium cancellation requests.');
+    expect(card).toContain('4 of 20 customers');
+    expect(card).toContain('PLAN_RATE_ABOVE_OVERALL');
+    expect(card).toContain('Version: 1');
+    expect(text()).toContain('No action is saved automatically.');
+  });
+
+  it('does not display a completed suggestion if another request fails', () => {
+    respondWithMonths();
+    const requests = pending(october);
+
+    requests.suggestions.flush(suggestionBody(october));
+    requests.summary.flush(octoberAll);
+    fixture.detectChanges();
+
+    expect(element.querySelector('.suggestion-card')).toBeNull();
+
+    requests.comparison.flush(
+      {},
+      { status: 503, statusText: 'Service Unavailable' }
+    );
+    fixture.detectChanges();
+
+    expect(element.querySelector('.suggestion-card')).toBeNull();
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
+    expect(values()).toEqual([]);
+  });
+
+  it('cancels obsolete suggestions and rejects late delivery', () => {
+    respondWithMonths();
+    const oldRequests = pending(october);
+
+    change('subscription-plan', 'Basic');
+    expect(oldRequests.suggestions.cancelled).toBe(true);
+
+    respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+
+    expect(() => oldRequests.suggestions.flush(
+      suggestionBody(october)
+    )).toThrow();
+
+    fixture.detectChanges();
+
+    expect(element.querySelector('.suggestion-card')).toBeNull();
+    expect(text()).toContain(
+      'No subscription plan in this selection meets the rule.'
+    );
+    expect(select('subscription-plan').value).toBe('Basic');
   });
 });

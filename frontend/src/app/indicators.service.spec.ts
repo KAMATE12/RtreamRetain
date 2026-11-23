@@ -262,4 +262,118 @@ describe('IndicatorsService', () => {
     // FR: Conserver la liste vide sans inventer un groupe avec un taux nul.
     expect(actual).toEqual(expected);
   });
+
+    it.each([null, 'Basic', 'Standard', 'Premium'] as const)(
+    'requests suggestions for %s and preserves the global reference',
+    (plan) => {
+      const expected = {
+        observation_month: '2026-09-01',
+        plan,
+        reference: {
+          scope: 'all_plans',
+          cohort_size: 100,
+          cancellation_count: 12,
+          cancellation_rate: 12,
+        },
+        suggestions: plan === null || plan === 'Premium'
+          ? [{
+              rule_id: 'PLAN_RATE_ABOVE_OVERALL',
+              rule_version: 1,
+              plan: 'Premium',
+              cohort_size: 20,
+              cancellation_count: 4,
+              cancellation_rate: 20,
+              proposed_action: 'Investigate Premium cancellation requests.',
+              rationale: '4 of 20 customers, compared with 12 of 100 overall.',
+            }]
+          : [],
+      };
+
+      let actual: unknown;
+
+      service.getRetentionSuggestions('2026-09-01', plan)
+        .subscribe((response) => {
+          actual = response;
+        });
+
+      const request = httpTesting.expectOne(
+        (candidate) => candidate.url === '/api/retention-suggestions'
+      );
+
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.get('observation_month'))
+        .toBe('2026-09-01');
+
+      if (plan === null) {
+        expect(request.request.params.has('plan')).toBe(false);
+        expect(request.request.params.keys())
+          .toEqual(['observation_month']);
+      } else {
+        expect(request.request.params.get('plan')).toBe(plan);
+        expect(request.request.params.keys().sort())
+          .toEqual(['observation_month', 'plan']);
+      }
+
+      request.flush(expected);
+
+      // EN: Preserve backend values, including the all-plan reference.
+      // FR: Conserver les valeurs du backend et la référence globale.
+      expect(actual).toEqual(expected);
+    }
+  );
+
+  it('preserves an unavailable suggestion reference for an empty month', () => {
+    const expected = {
+      observation_month: '2026-11-01',
+      plan: null,
+      reference: {
+        scope: 'all_plans',
+        cohort_size: 0,
+        cancellation_count: 0,
+        cancellation_rate: null,
+      },
+      suggestions: [],
+    };
+
+    let actual: unknown;
+
+    service.getRetentionSuggestions('2026-11-01')
+      .subscribe((response) => {
+        actual = response;
+      });
+
+    const request = httpTesting.expectOne(
+      '/api/retention-suggestions?observation_month=2026-11-01'
+    );
+
+    request.flush(expected);
+
+    expect(actual).toEqual(expected);
+  });
+
+  it('forwards suggestion API failures instead of returning empty results', () => {
+    let receivedResult = false;
+    let errorStatus: number | undefined;
+
+    service.getRetentionSuggestions('2026-09-01').subscribe({
+      next: () => {
+        receivedResult = true;
+      },
+      error: (error) => {
+        errorStatus = error.status;
+      },
+    });
+
+    const request = httpTesting.expectOne(
+      '/api/retention-suggestions?observation_month=2026-09-01'
+    );
+
+    request.flush(
+      { detail: 'Unable to load retention suggestions' },
+      { status: 503, statusText: 'Service Unavailable' },
+    );
+
+    expect(receivedResult).toBe(false);
+    expect(errorStatus).toBe(503);
+  });
 });

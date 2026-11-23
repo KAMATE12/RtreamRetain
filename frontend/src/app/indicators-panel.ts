@@ -32,6 +32,7 @@ import {
   MonthlyIndicators,
   PlanComparison,
   SubscriptionPlan,
+  RetentionSuggestionsResponse,
 } from './indicators.models';
 
 @Component({
@@ -58,22 +59,24 @@ export class IndicatorsPanel implements OnInit {
   readonly state = signal<IndicatorsState>('loading');
   readonly indicators = signal<MonthlyIndicators | null>(null);
   readonly comparisons = signal<PlanComparison[]>([]);
+  readonly suggestionResponse = signal<RetentionSuggestionsResponse | null>(null);
 
   readonly planLabel = computed(
     () => this.selection()?.plan ?? 'All plans'
   );
 
-  ngOnInit(): void {
-    // EN: Replace both requests whenever the active selection changes.
-    // FR: Remplacer les deux demandes à chaque changement de sélection.
+    ngOnInit(): void {
+    // EN: Replace all pending requests when the selection changes.
+    // FR: Remplacer les demandes en cours lors d'un changement de sélection.
     this.requests.pipe(
       switchMap((selection) => {
         this.indicators.set(null);
         this.comparisons.set([]);
+        this.suggestionResponse.set(null);
         this.state.set('loading');
 
-        // EN: Publish results only after both requests complete successfully.
-        // FR: Afficher les résultats après la réussite des deux demandes.
+        // EN: Display results only when all three requests succeed.
+        // FR: Afficher les résultats après réussite des trois demandes.
         return forkJoin({
           summary: this.service.getMonthlyIndicators(
             selection.observationMonth,
@@ -83,27 +86,30 @@ export class IndicatorsPanel implements OnInit {
             selection.observationMonth,
             selection.plan,
           ),
+          suggestions: this.service.getRetentionSuggestions(
+            selection.observationMonth,
+            selection.plan,
+          ),
         }).pipe(
-          // EN: A failure hides both results but preserves the active filters.
-          // FR: Un échec masque les résultats et conserve les filtres actifs.
           catchError(() => {
             this.indicators.set(null);
             this.comparisons.set([]);
+            this.suggestionResponse.set(null);
             this.state.set('error');
             return EMPTY;
           }),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ summary, comparison }) => {
+    ).subscribe(({ summary, comparison, suggestions }) => {
       this.indicators.set(summary);
       this.comparisons.set(comparison.comparisons);
+      this.suggestionResponse.set(suggestions);
       this.state.set(summary.cohort_size === 0 ? 'empty' : 'ready');
     });
 
     this.loadAvailableMonths();
   }
-
   private loadAvailableMonths(): void {
     if (this.monthsLoading) {
       return;
@@ -111,6 +117,8 @@ export class IndicatorsPanel implements OnInit {
 
     this.monthsLoading = true;
     this.indicators.set(null);
+    this.comparisons.set([]);
+    this.suggestionResponse.set(null);
     this.state.set('loading');
 
     this.service.getAvailableMonths().pipe(

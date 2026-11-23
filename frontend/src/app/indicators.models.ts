@@ -64,3 +64,34 @@ export interface PlanComparisonsResponse {
   plan: PlanSelection;
   comparisons: PlanComparison[];
 }
+
+/** EN: All-plan reference for the selected observation month.
+ *  FR: Référence de tous les abonnements pour le mois sélectionné. */
+export interface SuggestionReference {
+  scope: 'all_plans';
+  cohort_size: number;
+  cancellation_count: number;
+  cancellation_rate: number | null;
+}
+
+/** EN: An investigation proposal, not an automatically saved action.
+ *  FR: Une proposition d'investigation, pas une action enregistrée. */
+export interface RetentionSuggestion {
+  rule_id: string;
+  rule_version: number;
+  plan: SubscriptionPlan;
+  cohort_size: number;
+  cancellation_count: number;
+  cancellation_rate: number;
+  proposed_action: string;
+  rationale: string;
+}
+
+/** EN: Suggestions and their reference, with the requested filter scope.
+ *  FR: Suggestions et référence, accompagnées des filtres demandés. */
+export interface RetentionSuggestionsResponse {
+  observation_month: string;
+  plan: PlanSelection;
+  reference: SuggestionReference;
+  suggestions: RetentionSuggestion[];
+}

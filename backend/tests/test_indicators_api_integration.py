@@ -630,3 +630,139 @@ def test_plan_comparison_api_matches_summary_and_preserves_data(
         assert connection.execute(observations_query).all() == (
             observations_before
         )
+
+
+def test_suggestions_api_uses_monthly_data_and_preserves_observations(
+    isolated_engine,
+):
+    """Verify real SQL, reference scope and read-only behavior."""
+
+    customers = [
+        {"customer_id": f"C{number:06d}"}
+        for number in range(1, 101)
+    ]
+
+    # EN: September: Basic 8/80, Premium 4/20, overall 12/100.
+    # FR: Septembre : Basic 8/80, Premium 4/20, ensemble 12/100.
+    observations = [
+        {
+            "customer_id": f"C{number:06d}",
+            "observation_month": date(2026, 9, 1),
+            "plan": "Basic" if number <= 80 else "Premium",
+            "tenure_months": 0,
+            "viewing_hours": Decimal("10"),
+            "payment_failures": 0,
+            "support_requests": 0,
+            "cancelled_in_month": (
+                number <= 8 or 81 <= number <= 84
+            ),
+        }
+        for number in range(1, 101)
+    ]
+
+    # EN: October has three customers and no cancellation requests.
+    # FR: Octobre contient trois clients et aucune demande de résiliation.
+    for number, plan in enumerate(
+        ["Basic", "Standard", "Premium"],
+        start=1,
+    ):
+        observations.append(
+            {
+                **observations[0],
+                "customer_id": f"C{number:06d}",
+                "observation_month": date(2026, 10, 1),
+                "plan": plan,
+                "cancelled_in_month": False,
+            }
+        )
+
+    with isolated_engine.begin() as connection:
+        connection.execute(customer.insert(), customers)
+        connection.execute(customer_month.insert(), observations)
+
+    customers_query = select(customer).order_by(customer.c.customer_id)
+    observations_query = select(customer_month).order_by(
+        customer_month.c.customer_id,
+        customer_month.c.observation_month,
+    )
+
+    with isolated_engine.connect() as connection:
+        customers_before = connection.execute(customers_query).all()
+        observations_before = connection.execute(observations_query).all()
+
+    # EN: Expected reference counts always include all plans of that month.
+    # FR: Les effectifs de référence incluent tous les abonnements du mois.
+    cases = [
+        ("2026-09-01", None, ["Premium"], 100, 12, 12.0),
+        ("2026-09-01", "Premium", ["Premium"], 100, 12, 12.0),
+        ("2026-09-01", "Basic", [], 100, 12, 12.0),
+        ("2026-09-01", "Standard", [], 100, 12, 12.0),
+        ("2026-10-01", None, [], 3, 0, 0.0),
+        ("2026-10-01", "Premium", [], 3, 0, 0.0),
+        ("2026-11-01", None, [], 0, 0, None),
+    ]
+
+    # EN: Only engine selection is replaced; SQL and rule evaluation are real.
+    # FR: Seul le moteur est remplacé ; SQL et règle sont réellement exécutés.
+    with patch("app.main.get_engine", return_value=isolated_engine):
+        with TestClient(app) as client:
+            for month, plan, expected_plans, count, cancellations, rate in cases:
+                params = {"observation_month": month}
+
+                if plan is not None:
+                    params["plan"] = plan
+
+                response = client.get(
+                    "/api/retention-suggestions",
+                    params=params,
+                )
+
+                assert response.status_code == 200
+                body = response.json()
+
+                assert body["observation_month"] == month
+                assert body["plan"] == plan
+                assert body["reference"] == {
+                    "scope": "all_plans",
+                    "cohort_size": count,
+                    "cancellation_count": cancellations,
+                    "cancellation_rate": rate,
+                }
+                assert [
+                    item["plan"] for item in body["suggestions"]
+                ] == expected_plans
+
+                # EN: Compare the reference with the unfiltered monthly summary.
+                # FR: Comparer la référence au résumé mensuel sans filtre de plan.
+                summary_response = client.get(
+                    "/api/indicators",
+                    params={"observation_month": month},
+                )
+
+                assert summary_response.status_code == 200
+                summary = summary_response.json()
+
+                for field in (
+                    "cohort_size",
+                    "cancellation_count",
+                    "cancellation_rate",
+                ):
+                    assert body["reference"][field] == summary[field]
+
+                if expected_plans:
+                    suggestion = body["suggestions"][0]
+                    assert suggestion["rule_id"] == "PLAN_RATE_ABOVE_OVERALL"
+                    assert suggestion["rule_version"] == 1
+                    assert suggestion["cohort_size"] == 20
+                    assert suggestion["cancellation_count"] == 4
+                    assert suggestion["cancellation_rate"] == 20.0
+                    assert "4 of 20" in suggestion["rationale"]
+                    assert "12 of 100" in suggestion["rationale"]
+
+    # EN: Confirm that every stored field remains unchanged.
+    # FR: Confirmer que tous les champs enregistrés restent inchangés.
+    with isolated_engine.connect() as connection:
+        assert connection.execute(customers_query).all() == customers_before
+        assert connection.execute(observations_query).all() == (
+            observations_before
+        )
