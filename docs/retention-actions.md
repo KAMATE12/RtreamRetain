@@ -8,8 +8,8 @@ Parent epic: #12 — Retention action workflow
 
 Sprint: Sprint 4 — November 16–29, 2026
 
-Status: implemented and locally verified; publication, CI evidence
-and final acceptance review remain pending.
+Status: implemented, locally verified and published; GitHub Actions passed.
+Final acceptance review and issue closure remain pending.
 
 ## Purpose
 
@@ -614,28 +614,50 @@ concurrency or network-failure case.
 - UI refinement remains under issue #26.
 - Activity-based filtering remains deferred under epic #11.
 
-## Publication and CI status
+## Publication and CI evidence
 
-The implementation and this verification record have not yet been
-confirmed as committed and pushed for E4-02.
+The implementation, tests and documentation were published in commit
+`2bc988e`: `feat: create and list reviewed retention actions`.
 
-No E4-02 GitHub Actions result is claimed here.
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/2bc988e)
+- [Successful GitHub Actions run](https://github.com/KAMATE12/RtreamRetain/actions/runs/45744794801)
 
-Earlier passing CI runs for E4-01 do not validate these unpublished
-E4-02 changes.
+The supplied GitHub Actions screenshot shows:
 
-Local PostgreSQL integration results must remain distinguished
-from the checks actually executed in CI.
+| Check | Observed result |
+|---|---|
+| Workflow | Starter checks #54 |
+| Commit | `2bc988e` |
+| Branch | `main` |
+| Overall result | Success |
+| Displayed duration | 26 seconds |
+
+The screenshot shows the overall workflow result, not individual
+job logs or test counts.
+
+It does not establish that PostgreSQL integration tests ran in CI.
+
+Separate local verification recorded:
+
+- Backend: 322 tests passed with PostgreSQL integration enabled,
+  no skips and one deprecation warning.
+- Frontend: 56 tests passed across four files.
+- Frontend production build: passed.
+- Manual browser creation, reload, application restart,
+  failed-save input preservation and recovery: verified as described above.
+
+These local results remain distinct from the checks executed in CI.
+
+No new dependency-audit result is claimed.
 
 ## Remaining completion work
 
-- Review implementation, tests and documentation.
-- Commit and push the E4-02 files.
-- Record the corresponding GitHub Actions results.
+- Publish this documentation update containing the CI evidence.
 - Add implementation and verification evidence to issue #24.
-- Review acceptance criteria against the available evidence.
+- Review acceptance criteria against the recorded evidence.
 - Close issue #24 and mark its card Done when the review is complete.
 
+Action-status updates remain separate work under issue #25.
 Epic #12 remains open.
 
 ## References
