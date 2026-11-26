@@ -1,7 +1,7 @@
 """Integration tests using isolated PostgreSQL schemas."""
 
 import os
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
 
@@ -10,9 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.schema import CreateSchema
 
 from app.database import get_engine
-from app.schema import customer, customer_month, metadata
+from app.schema import customer, customer_month, metadata, retention_action
 
 from sqlalchemy.exc import IntegrityError
+
 
 from app.csv_import import (
     ObservationConflictError,
@@ -770,3 +771,366 @@ def test_plan_filter_applies_to_every_monthly_indicator(
     assert standard["cancellation_count"] == 0
     assert standard["cancellation_rate"] is None
     assert standard["average_viewing_hours"] is None
+
+@pytest.fixture
+def sample_action():
+    """Provide a reviewed proposal with a fixed context."""
+
+    return {
+        "id": uuid4(),
+        "created_at": datetime(2026, 11, 24, 12, 0, tzinfo=timezone.utc),
+        "observation_month": date(2026, 9, 1),
+        "plan": "Premium",
+        "proposed_action": "Investigate September Premium cancellations.",
+        "rationale": "Premium has 9 requests among 43 customers.",
+        "rule_id": "PLAN_RATE_ABOVE_OVERALL",
+        "rule_version": 1,
+    }
+
+
+def test_action_fields_and_default_status_are_preserved(
+    db_connection,
+    sample_action,
+):
+    """Store the original context and default to Proposed."""
+
+    db_connection.execute(retention_action.insert(), sample_action)
+
+    stored = dict(
+        db_connection.execute(select(retention_action)).mappings().one()
+    )
+
+    assert stored == {**sample_action, "status": "Proposed"}
+    assert stored["created_at"].utcoffset() is not None
+
+
+def test_multiple_actions_can_share_month_and_plan(
+    db_connection,
+    sample_action,
+):
+    """Different proposals may concern the same customer segment."""
+
+    second_action = {
+        **sample_action,
+        "id": uuid4(),
+        "proposed_action": "Review support requests for this cohort.",
+    }
+
+    db_connection.execute(
+        retention_action.insert(),
+        [sample_action, second_action],
+    )
+
+    stored = db_connection.execute(
+        select(retention_action)
+    ).mappings().all()
+
+    assert len(stored) == 2
+    assert {row["id"] for row in stored} == {
+        sample_action["id"],
+        second_action["id"],
+    }
+
+
+def test_action_storage_accepts_all_plans_scope(
+    db_connection,
+    sample_action,
+):
+    """NULL represents All plans at the storage level."""
+
+    db_connection.execute(
+        retention_action.insert(),
+        {**sample_action, "plan": None},
+    )
+
+    stored_plan = db_connection.execute(
+        select(retention_action.c.plan)
+    ).scalar_one()
+
+    assert stored_plan is None
+
+
+@pytest.mark.parametrize(
+    "field,value,constraint",
+    [
+        (
+            "observation_month",
+            date(2026, 9, 15),
+            "ck_retention_action_first_day",
+        ),
+        ("plan", "Unknown", "ck_retention_action_plan"),
+        ("proposed_action", "", "ck_retention_action_text"),
+        ("proposed_action", " \t\n ", "ck_retention_action_text"),
+        ("proposed_action", "x" * 1001, "ck_retention_action_text"),
+        ("rationale", "", "ck_retention_action_rationale"),
+        ("rationale", " \t\n ", "ck_retention_action_rationale"),
+        ("rationale", "x" * 3001, "ck_retention_action_rationale"),
+        ("rule_id", "", "ck_retention_action_rule_id"),
+        ("rule_id", " \t\n ", "ck_retention_action_rule_id"),
+        ("rule_id", "x" * 101, "ck_retention_action_rule_id"),
+        ("rule_version", 0, "ck_retention_action_rule_version"),
+        ("rule_version", -1, "ck_retention_action_rule_version"),
+        ("status", "Unknown", "ck_retention_action_status"),
+    ],
+)
+def test_invalid_action_values_are_rejected(
+    db_connection,
+    sample_action,
+    field,
+    value,
+    constraint,
+):
+    """Reject invalid data using the intended database constraint."""
+
+    with pytest.raises(IntegrityError) as captured:
+        # EN: Roll back only the rejected insertion.
+        # FR: Annuler uniquement l'insertion refusée.
+        with db_connection.begin_nested():
+            db_connection.execute(
+                retention_action.insert(),
+                {**sample_action, field: value},
+            )
+
+    assert captured.value.orig.sqlstate == "23514"
+    assert captured.value.orig.diag.constraint_name == constraint
+
+    assert db_connection.execute(
+        select(retention_action)
+    ).mappings().all() == []
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "id",
+        "created_at",
+        "observation_month",
+        "proposed_action",
+        "rationale",
+        "rule_id",
+        "rule_version",
+        "status",
+    ],
+)
+def test_required_action_fields_reject_null(
+    db_connection,
+    sample_action,
+    field,
+):
+    """Required fields must not accept SQL NULL."""
+
+    with pytest.raises(IntegrityError) as captured:
+        with db_connection.begin_nested():
+            db_connection.execute(
+                retention_action.insert(),
+                {**sample_action, field: None},
+            )
+
+    assert captured.value.orig.sqlstate == "23502"
+
+
+def test_action_text_limits_are_inclusive(db_connection, sample_action):
+    """Accept text exactly at the documented storage limits."""
+
+    values = {
+        **sample_action,
+        "proposed_action": "x" * 1000,
+        "rationale": "x" * 3000,
+        "rule_id": "R" * 100,
+    }
+    db_connection.execute(retention_action.insert(), values)
+
+    stored = dict(
+        db_connection.execute(select(retention_action)).mappings().one()
+    )
+
+    assert stored == {**values, "status": "Proposed"}
+
+
+def test_adding_action_table_preserves_existing_observations(
+    db_connection,
+    sample_observation,
+):
+    """Simulate adding the action table to an existing customer schema."""
+
+    # EN: This connection targets only the isolated test schema.
+    # FR: Cette connexion cible uniquement le schéma de test isolé.
+    retention_action.drop(bind=db_connection)
+
+    db_connection.execute(
+        customer.insert(),
+        {"customer_id": sample_observation["customer_id"]},
+    )
+    db_connection.execute(customer_month.insert(), sample_observation)
+
+    customers_before = [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer)
+        ).mappings()
+    ]
+    observations_before = [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer_month)
+        ).mappings()
+    ]
+
+    # EN: Create the missing action table, then repeat initialization.
+    # FR: Créer la table manquante, puis répéter l'initialisation.
+    metadata.create_all(bind=db_connection, checkfirst=True)
+    metadata.create_all(bind=db_connection, checkfirst=True)
+
+    assert [
+        dict(row)
+        for row in db_connection.execute(select(customer)).mappings()
+    ] == customers_before
+
+    assert [
+        dict(row)
+        for row in db_connection.execute(select(customer_month)).mappings()
+    ] == observations_before
+
+    assert db_connection.execute(
+        select(retention_action)
+    ).mappings().all() == []
+
+def test_create_action_preserves_reviewed_text_and_observations(
+    db_connection,
+    sample_observation,
+):
+    from datetime import datetime, timezone
+    from uuid import UUID
+
+    from app.retention_action_models import RetentionActionCreate
+    from app.retention_actions import (
+        create_retention_action,
+        list_retention_actions,
+    )
+
+    # EN: Premium has 100%, compared with 50% across both plans.
+    # FR: Premium atteint 100%, contre 50% pour les deux abonnements.
+    observations = [
+        {
+            **sample_observation,
+            "customer_id": "C000001",
+            "plan": "Premium",
+            "cancelled_in_month": True,
+        },
+        {
+            **sample_observation,
+            "customer_id": "C000002",
+            "plan": "Basic",
+            "cancelled_in_month": False,
+        },
+    ]
+
+    db_connection.execute(
+        customer.insert(),
+        [{"customer_id": row["customer_id"]} for row in observations],
+    )
+    db_connection.execute(customer_month.insert(), observations)
+
+    customers_before = [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer).order_by(customer.c.customer_id)
+        ).mappings()
+    ]
+    observations_before = [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer_month).order_by(customer_month.c.customer_id)
+        ).mappings()
+    ]
+
+    request = RetentionActionCreate(
+        observation_month="2026-09-01",
+        plan="Premium",
+        proposed_action="Review the support history for this cohort.",
+        rationale="Manager-reviewed proposal based on the displayed counts.",
+        rule_id="PLAN_RATE_ABOVE_OVERALL",
+        rule_version=1,
+    )
+
+    before = datetime.now(timezone.utc)
+    saved = create_retention_action(db_connection, request=request)
+    after = datetime.now(timezone.utc)
+
+    assert isinstance(saved["id"], UUID)
+    assert before <= saved["created_at"] <= after
+    assert saved["status"] == "Proposed"
+
+    for field, value in request.model_dump().items():
+        assert saved[field] == value
+
+    assert list_retention_actions(db_connection) == [saved]
+
+    assert [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer).order_by(customer.c.customer_id)
+        ).mappings()
+    ] == customers_before
+
+    assert [
+        dict(row)
+        for row in db_connection.execute(
+            select(customer_month).order_by(customer_month.c.customer_id)
+        ).mappings()
+    ] == observations_before
+
+
+def test_unavailable_suggestion_creates_no_action(db_connection):
+    from app.retention_action_models import RetentionActionCreate
+    from app.retention_actions import (
+        SuggestionUnavailableError,
+        create_retention_action,
+        list_retention_actions,
+    )
+
+    request = RetentionActionCreate(
+        observation_month="2026-09-01",
+        plan="Premium",
+        proposed_action="Investigate cancellation requests.",
+        rationale="Review the selected cohort.",
+        rule_id="PLAN_RATE_ABOVE_OVERALL",
+        rule_version=1,
+    )
+
+    # EN: No observations means no eligible suggestion.
+    # FR: Sans observations, aucune suggestion n'est admissible.
+    with pytest.raises(SuggestionUnavailableError):
+        create_retention_action(db_connection, request=request)
+
+    assert list_retention_actions(db_connection) == []
+
+
+def test_action_listing_has_stable_order(db_connection, sample_action):
+    from datetime import timedelta
+    from uuid import UUID
+
+    from app.retention_actions import list_retention_actions
+
+    older = {
+        **sample_action,
+        "id": UUID(int=3),
+        "created_at": sample_action["created_at"] - timedelta(days=1),
+    }
+    newer_low_id = {**sample_action, "id": UUID(int=1)}
+    newer_high_id = {**sample_action, "id": UUID(int=2)}
+
+    # EN: Insert out of the expected display order.
+    # FR: Insérer dans un ordre différent de l'ordre d'affichage attendu.
+    db_connection.execute(
+        retention_action.insert(),
+        [newer_low_id, older, newer_high_id],
+    )
+
+    listed = list_retention_actions(db_connection)
+
+    assert [row["id"] for row in listed] == [
+        UUID(int=2),
+        UUID(int=1),
+        UUID(int=3),
+    ]

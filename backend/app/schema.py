@@ -11,6 +11,8 @@ from sqlalchemy import (
     Numeric,
     Table,
     Text,
+    DateTime,
+    Uuid,
 )
 
 
@@ -119,5 +121,75 @@ customer_month = Table(
         "AND viewing_hours NOT IN "
         "('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric)",
         name="ck_customer_month_viewing_hours_valid",
+    ),
+)
+
+# EN: Preserve reviewed follow-up proposals and their original context.
+# FR: Conserver les propositions examinées et leur contexte d'origine.
+retention_action = Table(
+    "retention_action",
+    metadata,
+
+    # EN: The backend supplies the identifier and UTC creation timestamp.
+    # FR: Le backend fournit l'identifiant et la date de création UTC.
+    Column("id", Uuid(as_uuid=True), primary_key=True, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+
+    Column("observation_month", Date, nullable=False),
+
+    # EN: NULL represents All plans, not an unknown subscription plan.
+    # FR: NULL représente tous les abonnements, pas un abonnement inconnu.
+    Column("plan", Text, nullable=True),
+
+    Column("proposed_action", Text, nullable=False),
+    Column("rationale", Text, nullable=False),
+    Column("rule_id", Text, nullable=False),
+    Column("rule_version", Integer, nullable=False),
+
+    # EN: The creation endpoint will always assign Proposed.
+    # FR: La route de création imposera toujours le statut Proposed.
+    Column(
+        "status",
+        Text,
+        nullable=False,
+        server_default="Proposed",
+    ),
+
+    CheckConstraint(
+        "EXTRACT(DAY FROM observation_month) = 1",
+        name="ck_retention_action_first_day",
+    ),
+    CheckConstraint(
+        "plan IS NULL OR plan IN ('Basic', 'Standard', 'Premium')",
+        name="ck_retention_action_plan",
+    ),
+
+    # EN: Reject blank text and enforce storage length limits.
+    # FR: Refuser les textes blancs et limiter leur longueur.
+    CheckConstraint(
+        "length(proposed_action) BETWEEN 1 AND 1000 "
+        "AND proposed_action ~ '[^[:space:]]'",
+        name="ck_retention_action_text",
+    ),
+    CheckConstraint(
+        "length(rationale) BETWEEN 1 AND 3000 "
+        "AND rationale ~ '[^[:space:]]'",
+        name="ck_retention_action_rationale",
+    ),
+    CheckConstraint(
+        "length(rule_id) BETWEEN 1 AND 100 "
+        "AND rule_id ~ '[^[:space:]]'",
+        name="ck_retention_action_rule_id",
+    ),
+    CheckConstraint(
+        "rule_version > 0",
+        name="ck_retention_action_rule_version",
+    ),
+
+    # EN: Reserve workflow statuses; updates are implemented in E4-03.
+    # FR: Prévoir les statuts du suivi ; leurs modifications viendront en E4-03.
+    CheckConstraint(
+        "status IN ('Proposed', 'In Progress', 'Completed', 'Dismissed')",
+        name="ck_retention_action_status",
     ),
 )

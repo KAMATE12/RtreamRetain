@@ -14,6 +14,12 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from app.suggestions import build_plan_suggestions
+from app.retention_action_models import RetentionActionCreate
+from app.retention_actions import (
+    SuggestionUnavailableError,
+    create_retention_action,
+    list_retention_actions,
+)
 
 from app.database import get_engine
 from app.indicators import (
@@ -267,3 +273,73 @@ def retention_suggestions(
         observation_month=observation_month,
         plan=plan,
     )
+
+@app.post("/api/retention-actions", status_code=201)
+def save_retention_action(request: RetentionActionCreate):
+    """Save a reviewed proposal and confirm success after commit."""
+
+    try:
+        engine = get_engine()
+    except ValueError:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to save the proposed action",
+        ) from None
+
+    try:
+        # EN: Commit on successful exit; roll back if an exception occurs.
+        # FR: Valider à la sortie normale ; annuler en cas d'exception.
+        with engine.begin() as connection:
+            saved_action = create_retention_action(
+                connection,
+                request=request,
+            )
+
+    except SuggestionUnavailableError:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This suggestion is no longer available. "
+                "Refresh the dashboard and review the suggestion again."
+            ),
+        ) from None
+
+    except SQLAlchemyError:
+        # EN: Do not retry automatically: the save outcome may be uncertain.
+        # FR: Ne pas réessayer automatiquement : le résultat peut être incertain.
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The save could not be confirmed. "
+                "Refresh the saved-action list before trying again."
+            ),
+        ) from None
+
+    # EN: Return success only after the transaction has committed.
+    # FR: Annoncer le succès uniquement après validation de la transaction.
+    return saved_action
+
+
+@app.get("/api/retention-actions")
+def saved_retention_actions():
+    """Return all saved proposals with their original context."""
+
+    try:
+        engine = get_engine()
+    except ValueError:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to load saved actions",
+        ) from None
+
+    try:
+        with engine.connect() as connection:
+            actions = list_retention_actions(connection)
+
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to load saved actions",
+        ) from None
+
+    return {"actions": actions}

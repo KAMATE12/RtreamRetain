@@ -1,0 +1,130 @@
+<section aria-labelledby="actions-title">
+  <h2 id="actions-title">Proposed follow-up actions</h2>
+
+  <p>
+    Actions are proposals based on synthetic observations.
+    Saving does not execute an intervention or prove its effectiveness.
+  </p>
+
+  @if (draft(); as context) {
+    <form
+      (ngSubmit)="saveAction()"
+      aria-labelledby="review-title"
+      [attr.aria-busy]="saving()"
+    >
+      <h3 id="review-title">Review proposal</h3>
+
+      <p class="context">
+        <strong>Observation month:</strong>
+        {{ context.observation_month.slice(0, 7) }}
+        · <strong>Plan:</strong> {{ context.plan }}
+        <br>
+        <strong>Rule:</strong> {{ context.rule_id }}
+        · <strong>Version:</strong> {{ context.rule_version }}
+      </p>
+
+      <p>
+        This context remains fixed when dashboard filters change.
+        Close this draft before reviewing another suggestion.
+      </p>
+
+      <fieldset [disabled]="saving()">
+        <legend>Proposal details</legend>
+
+        <label for="action-text">Proposed action</label>
+        <textarea
+          id="action-text"
+          name="actionText"
+          rows="3"
+          [(ngModel)]="actionText"
+          aria-describedby="action-text-help"
+        ></textarea>
+        <p id="action-text-help">
+          Required: 1–1000 characters after trimming outer whitespace.
+        </p>
+
+        <label for="action-rationale">Rationale</label>
+        <textarea
+          id="action-rationale"
+          name="rationaleText"
+          rows="6"
+          [(ngModel)]="rationaleText"
+          aria-describedby="rationale-help"
+        ></textarea>
+        <p id="rationale-help">
+          Required: 1–3000 characters after trimming outer whitespace.
+        </p>
+
+        <div class="buttons">
+          <button type="submit">
+            {{ saving() ? 'Saving…' : 'Save proposal' }}
+          </button>
+          <button type="button" (click)="closeReview()">
+            Close draft
+          </button>
+        </div>
+      </fieldset>
+
+      @if (saving()) {
+        <p role="status">Saving the proposal…</p>
+      }
+
+      @if (saveError()) {
+        <p role="alert">{{ saveError() }}</p>
+      }
+    </form>
+  }
+
+  @if (successMessage()) {
+    <p role="status">{{ successMessage() }}</p>
+  }
+
+  <h3>Saved actions</h3>
+  <p>
+    All saved actions are shown with their original context,
+    independently of dashboard filters. Newest first.
+    Equal creation timestamps are ordered by identifier, descending.
+  </p>
+
+  <button
+    type="button"
+    (click)="loadActions()"
+    [disabled]="listState() === 'loading'"
+  >
+    Refresh saved actions
+  </button>
+
+  <div [attr.aria-busy]="listState() === 'loading'">
+    @if (listState() === 'loading') {
+      <p role="status">Loading saved actions…</p>
+    } @else if (listState() === 'error') {
+      <p role="alert">
+        Unable to load saved actions. Use Refresh saved actions to try again.
+      </p>
+    } @else if (actions().length === 0) {
+      <p>No proposed actions have been saved yet.</p>
+    } @else {
+      @for (action of actions(); track action.id) {
+        <article>
+          <h4>{{ action.proposed_action }}</h4>
+          <p>
+            <strong>Observation month:</strong>
+            {{ action.observation_month.slice(0, 7) }}
+            · <strong>Plan:</strong> {{ action.plan ?? 'All plans' }}
+          </p>
+          <p class="rationale">{{ action.rationale }}</p>
+          <p>
+            <strong>Rule:</strong> {{ action.rule_id }}
+            · <strong>Version:</strong> {{ action.rule_version }}
+          </p>
+          <p>
+            <strong>Status:</strong> {{ action.status }}
+            · <strong>Created:</strong>
+            {{ action.created_at | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC
+          </p>
+          <p class="identifier">Action ID: {{ action.id }}</p>
+        </article>
+      }
+    }
+  </div>
+</section>

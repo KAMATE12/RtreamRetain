@@ -108,7 +108,17 @@ describe('IndicatorsPanel', () => {
     fixture = TestBed.createComponent(IndicatorsPanel);
     element = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
+
+    // EN: Complete the independent initial request for saved actions.
+    // FR: Terminer la requête initiale indépendante des actions enregistrées.
+    const actionsRequest = httpTesting.expectOne('/api/retention-actions');
+    expect(actionsRequest.request.method).toBe('GET');
+    actionsRequest.flush({ actions: [] });
+
+    fixture.detectChanges();
   });
+
+
 
   afterEach(() => {
     httpTesting.verify();
@@ -658,4 +668,77 @@ describe('IndicatorsPanel', () => {
     );
     expect(select('subscription-plan').value).toBe('Basic');
   });
+
+  it('preserves the reviewed context and pending save across filter changes', async () => {
+    initialize();
+
+    const reviewButton = element.querySelector<HTMLButtonElement>(
+      '.suggestion-card button'
+    );
+    expect(reviewButton).not.toBeNull();
+    reviewButton!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const panel = element.querySelector('app-retention-actions-panel')!;
+    const actionInput = panel.querySelector<HTMLTextAreaElement>(
+      '#action-text'
+    )!;
+
+    actionInput.value = 'Investigate the original October Premium cohort.';
+    actionInput.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    // EN: Change both filters while retaining the October Premium draft.
+    // FR: Changer les deux filtres en conservant le brouillon Premium d'octobre.
+    change('subscription-plan', 'Basic');
+    respond(octoberBasic, [octoberGroups[0]!], 'Basic');
+    change('observation-month', september);
+    respond(septemberBasic, [septemberGroups[0]!], 'Basic');
+    await fixture.whenStable();
+
+    const context = cleanText(panel.querySelector('.context')!);
+    expect(context).toContain('2026-10');
+    expect(context).toContain('Premium');
+    expect(actionInput.value).toBe(
+      'Investigate the original October Premium cohort.'
+    );
+
+    panel.querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true })
+    );
+    fixture.detectChanges();
+
+    const save = httpTesting.expectOne('/api/retention-actions');
+    expect(save.request.method).toBe('POST');
+    expect(save.request.body.observation_month).toBe(october);
+    expect(save.request.body.plan).toBe('Premium');
+
+    // EN: Changing filters must not cancel a pending action save.
+    // FR: Un changement de filtre ne doit pas annuler l'enregistrement.
+    change('subscription-plan', '');
+    respond(septemberAll, septemberGroups);
+    expect(save.cancelled).toBe(false);
+
+    const saved = {
+      ...save.request.body,
+      id: '00000000-0000-0000-0000-000000000001',
+      status: 'Proposed',
+      created_at: '2026-11-24T12:00:00+00:00',
+    };
+    save.flush(saved, { status: 201, statusText: 'Created' });
+
+    httpTesting.expectOne('/api/retention-actions').flush({
+      actions: [saved],
+    });
+    fixture.detectChanges();
+
+    const savedCard = cleanText(panel.querySelector('article')!);
+    expect(savedCard).toContain('2026-10');
+    expect(savedCard).toContain('Premium');
+    expect(select('observation-month').value).toBe(september);
+    expect(select('subscription-plan').value).toBe('');
+  });
+
+
 });

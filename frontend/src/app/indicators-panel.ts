@@ -24,6 +24,7 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, forkJoin, switchMap } from 'rxjs';
+import { RetentionActionsPanel } from './retention-actions-panel';
 
 import { IndicatorsService } from './indicators.service';
 import {
@@ -38,7 +39,7 @@ import {
 @Component({
   selector: 'app-indicators-panel',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, RetentionActionsPanel],
   templateUrl: './indicators-panel.html',
   styleUrl: './indicators-panel.css',
 })

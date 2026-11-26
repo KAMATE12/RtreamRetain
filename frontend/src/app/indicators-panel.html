@@ -1,14 +1,9 @@
 <!--
-EN: Display month and plan selectors alongside the matching indicators.
-Keep filters visible during loading and failure, hide obsolete values,
-and distinguish unavailable indicators from measured zeros.
+EN: Display matching indicators, comparisons and investigation suggestions.
+Keep the action review panel available when dashboard filters change.
 
-FR: Afficher les sélecteurs et les indicateurs correspondant à leur choix.
-Conserver les filtres pendant le chargement et les erreurs, masquer les
-anciennes valeurs et distinguer les données indisponibles des zéros mesurés.
-
-EN: Show plan denominators, cancellation counts and rates together.
-FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
+FR: Afficher les indicateurs, comparaisons et suggestions correspondants.
+Conserver le panneau des actions lors des changements de filtres.
 -->
 
 <section aria-labelledby="indicators-title">
@@ -56,7 +51,9 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
 
   <div aria-live="polite" [attr.aria-busy]="state() === 'loading'">
     @if (state() === 'loading') {
-      <p role="status">Loading monthly indicators, comparisons and suggestions…</p>
+      <p role="status">
+        Loading monthly indicators, comparisons and suggestions…
+      </p>
     }
 
     @if (state() === 'error') {
@@ -101,9 +98,9 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
         </dd>
       </dl>
 
-            <!--
-      EN: Keep the comparison inside the successful or empty result state.
-      FR: Garder la comparaison dans l'état de résultat réussi ou vide.
+      <!--
+      EN: Show comparisons only for a successful or empty dashboard result.
+      FR: Afficher les comparaisons après un résultat réussi ou vide.
       -->
       <h3 id="plan-comparison-title">Subscription-plan comparison</h3>
 
@@ -162,8 +159,10 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
           </p>
 
           <p class="suggestion-reference">
-            <strong>Reference: all plans for
-              {{ response.observation_month.slice(0, 7) }}.</strong>
+            <strong>
+              Reference: all plans for
+              {{ response.observation_month.slice(0, 7) }}.
+            </strong>
             {{ response.reference.cancellation_count }} cancellation requests
             among {{ response.reference.cohort_size }} customers.
             Overall cancellation-request rate:
@@ -202,6 +201,18 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
                   Rule: {{ suggestion.rule_id }}
                   · Version: {{ suggestion.rule_version }}
                 </p>
+
+                <!--
+                EN: Open a draft using this suggestion's original context.
+                FR: Ouvrir un brouillon avec le contexte de cette suggestion.
+                -->
+                <button
+                  type="button"
+                  [disabled]="actionsPanel.draft() !== null || actionsPanel.saving()"
+                  (click)="actionsPanel.openReview(response.observation_month, suggestion)"
+                >
+                  Review proposal
+                </button>
               </article>
             }
           }
@@ -235,3 +246,9 @@ FR: Afficher ensemble les effectifs, les demandes d'annulation et les taux.
     Associations do not establish causation or actual IVI behavior.
   </p>
 </section>
+
+<!--
+EN: Keep the action workflow mounted when dashboard filters change.
+FR: Conserver le parcours des actions lors des changements de filtres.
+-->
+<app-retention-actions-panel #actionsPanel />

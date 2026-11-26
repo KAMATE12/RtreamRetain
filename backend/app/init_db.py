@@ -33,7 +33,10 @@ def main() -> int:
     # EN: This message also applies when the tables already existed.
     # FR: Ce message convient aussi lorsque les tables existaient déjà.
     print("Database initialization successful.")
-    print("Required tables are present: customer, customer_month.")
+    print(
+        "Required tables are present: "
+        "customer, customer_month, retention_action."
+    )
     print("No existing data was deleted.")
     return 0
 
