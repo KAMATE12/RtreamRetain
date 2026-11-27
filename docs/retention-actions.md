@@ -668,3 +668,245 @@ Epic #12 remains open.
 - [Suggestion rules](retention-suggestion-rules.md)
 - [Sprint 4 plan](sprint-4-plan.md)
 - [Product backlog](product-backlog.md)
+
+## E4-03 — Status updates and persistence
+
+Verification record prepared: November 27, 2026.
+
+This section extends the earlier E4-02 creation and listing record.
+Earlier test counts and CI links describe E4-02.
+Statements above that status updates remain future work are superseded
+by this section.
+
+Current E4-03 status: implemented and locally verified.
+Publication, CI evidence and final acceptance review remain pending.
+
+### Status definitions and transitions
+
+| Current status | Meaning | Permitted next statuses |
+|---|---|---|
+| Proposed | Proposal recorded; work not started | In Progress, Dismissed |
+| In Progress | Follow-up work started | Completed, Dismissed |
+| Completed | Recorded follow-up work finished | None |
+| Dismissed | Proposal set aside | None |
+
+Requesting the already stored status succeeds without modifying the
+action or its timestamps.
+
+Completed records workflow progress, not proven retention improvement.
+Reopening Completed or Dismissed actions is not supported.
+
+### API contract
+
+Endpoint: PATCH /api/retention-actions/{action_id}/status
+
+The action_id path parameter must be a valid UUID.
+
+Example request body: {"status": "In Progress"}
+
+Only the required status field is accepted.
+Its value must exactly match one of the four supported status strings.
+Missing fields, unknown statuses and unrelated fields are rejected.
+
+Success returns HTTP 200 with the complete persisted action:
+id, created_at, observation_month, plan, proposed_action, rationale,
+rule_id, rule_version and status.
+
+| Situation | HTTP response |
+|---|---|
+| Permitted transition | 200, persisted action |
+| Already stored status | 200, unchanged action |
+| Missing action | 404 |
+| Forbidden transition from stored status | 409 |
+| Invalid UUID or request body | 422 |
+| Handled database or configuration failure | 503 |
+
+Handled database failures return generic messages without exposing
+internal database or configuration details.
+
+### Atomic validation and data preservation
+
+The backend opens a transaction and locks the selected action using
+SELECT ... FOR UPDATE.
+
+It validates the transition against the stored status after acquiring
+the lock. Validation and update occur in the same transaction.
+
+A competing request must evaluate the status available after it acquires
+the row lock. It cannot rely on an earlier browser value.
+
+Success is returned only after the transaction completes.
+A same-status request does not execute an UPDATE.
+
+Only status is changed. The identifier, observation month, plan,
+proposal text, rationale, rule identifier, rule version and original
+creation timestamp are preserved.
+
+Customer observations remain unchanged.
+
+No new timestamp column or status-history table is introduced.
+The creation timestamp remains the original UTC timestamp.
+
+### Interface behaviour
+
+Each action displays its confirmed status and only permitted next steps.
+A status change requires an explicit button click.
+
+While an update is pending:
+
+- The last confirmed status remains displayed.
+- A pending message is shown.
+- Repeated status submissions are disabled.
+- List refresh and proposal creation are blocked.
+- Existing draft text is preserved.
+
+The component allows only one pending write at a time.
+This is a local interface safeguard, not cross-session coordination.
+
+After success, the displayed action comes from the server response.
+
+After failure:
+
+- No false success is displayed.
+- The last confirmed status is retained.
+- An understandable error requests a list refresh.
+- Status changes for that action remain blocked until refresh succeeds.
+
+A lost response does not prove that the update failed.
+No automatic PATCH retry is performed.
+
+A successful refresh retrieves persisted values and clears the error.
+A failed refresh does not clear the requirement to reload.
+
+Terminal actions have no transition buttons.
+The interface explains that reopening is unavailable and that
+Completed does not establish improved customer retention.
+
+### Implementation and automated coverage
+
+New backend files:
+
+- backend/app/retention_action_status.py
+- backend/tests/test_retention_action_status.py
+
+The existing action models, storage functions, FastAPI endpoints,
+Angular service and action panel were extended.
+
+Backend verification covers:
+
+- All status pairs.
+- Successful same-status requests.
+- Invalid statuses and unrelated request fields.
+- Missing actions.
+- Preservation of unrelated action fields and customer observations.
+- Competing status updates.
+- Rollback after a simulated database error.
+
+The action API integration file contains 34 tests, including earlier
+creation and listing checks. PostgreSQL tests use isolated schemas.
+
+Frontend verification uses controlled HTTP responses and covers:
+
+- Permitted controls for each status.
+- Server-confirmed updates.
+- Pending requests and repeated submissions.
+- HTTP errors and lost responses.
+- Refresh before retrying.
+- Failed recovery refresh.
+- Coordination between proposal creation and status updates.
+
+### Latest local results
+
+| Check | Observed result |
+|---|---|
+| Complete backend suite with PostgreSQL enabled | 393 passed, no skips |
+| Backend duration | 24.07 seconds |
+| Backend warnings | 1 existing Starlette/httpx deprecation warning |
+| Frontend test files | 4 passed |
+| Frontend tests | 79 passed |
+| Frontend test duration | 8.21 seconds |
+| Frontend production build | Passed |
+| Build duration | 6.198 seconds |
+| Initial production bundle total | 300.22 kB |
+| Estimated transfer size | 79.62 kB |
+
+Frontend test distribution:
+
+| Test file | Passed tests |
+|---|---:|
+| indicators.service.spec.ts | 14 |
+| retention-actions.service.spec.ts | 14 |
+| retention-actions-panel.spec.ts | 30 |
+| indicators-panel.spec.ts | 21 |
+| Total | 79 |
+
+Frontend build and test logs are dated November 27, 2026.
+The supplied backend output does not include an execution timestamp.
+
+The existing deprecation warning remains unresolved.
+These local results do not establish that PostgreSQL tests ran in CI.
+
+### Manual browser and restart verification
+
+Environment: Microsoft Edge on Windows with local Angular, FastAPI
+and PostgreSQL.
+
+Observed action:
+
+- ID: e5f83ebb-88f4-4467-aefa-037f6fcc09c2.
+- Month: September 2026.
+- Plan: Premium.
+- Rule: PLAN_RATE_ABOVE_OVERALL, version 1.
+- Original creation time: November 26, 2026, 02:06:56 UTC.
+
+The project author confirmed:
+
+1. Proposed changed to In Progress after server confirmation.
+2. The same action remained In Progress after F5.
+3. In Progress remained after restarting FastAPI and Angular.
+4. In Progress remained after restarting PostgreSQL without deleting
+   its persistent volume.
+
+FastAPI was then stopped before requesting Completed.
+
+The failure screenshot shows the last confirmed status In Progress,
+disabled transition buttons and an uncertain-update message.
+No success message is displayed.
+
+A later screenshot shows the same action as Completed, with server
+confirmation and no transition buttons. Its identifier and creation
+timestamp remain unchanged.
+
+The project author explicitly confirmed that Completed remained
+present after F5.
+
+Restart checks were performed at In Progress.
+A separate restart check at Completed is not claimed.
+
+These observations describe the tested local scenario, not every
+possible network-failure or concurrency outcome.
+
+### Publication and remaining work
+
+E4-02 implementation was published in commit 2bc988e.
+Its publication and CI evidence were published in commit ac9689d.
+
+No E4-03 implementation commit or CI result is recorded yet.
+Earlier E4-02 CI results do not validate these new changes.
+
+Remaining E4-03 work:
+
+- Review and publish the implementation, tests and documentation.
+- Record the corresponding GitHub Actions result.
+- Add completion evidence to issue #25.
+- Review acceptance criteria before closing the issue and marking it Done.
+
+Epic #12 remains open.
+
+### Limitations
+
+No reopening, action deletion, editing of saved proposal text,
+full status history, authentication or automatic intervention is added.
+
+Actions remain proposals based on synthetic observations.
+Technical verification does not establish retention effectiveness.

@@ -89,3 +89,17 @@ class RetentionActionCreate(BaseModel):
         if value != RULE_VERSION:
             raise ValueError("Unsupported source rule version")
         return value
+
+class RetentionActionStatusUpdate(BaseModel):
+    """Validate a request that changes only an action's status."""
+
+    # EN: Reject unrelated fields, even if their values are unchanged.
+    # FR: Refuser les autres champs, même si leurs valeurs sont inchangées.
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal[
+        "Proposed",
+        "In Progress",
+        "Completed",
+        "Dismissed",
+    ]

@@ -138,4 +138,92 @@ describe('RetentionActionsService', () => {
     expect(success).toBe(false);
     expect(errorStatus).toBe(503);
   });
+
+    // EN: Verify status requests independently of the component controls.
+  // FR: Vérifier les requêtes de statut indépendamment des boutons.
+  it.each([
+    'Proposed',
+    'In Progress',
+    'Completed',
+    'Dismissed',
+  ] as const)(
+    'sends only target status %s and returns the confirmed action',
+    (targetStatus) => {
+      const url = `/api/retention-actions/${saved.id}/status`;
+      const confirmed: RetentionAction = {
+        ...saved,
+        status: targetStatus,
+      };
+      let received: RetentionAction | undefined;
+
+      service.updateStatus(saved.id, targetStatus).subscribe((response) => {
+        received = response;
+      });
+
+      const request = http.expectOne(url);
+
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ status: targetStatus });
+      expect(request.request.params.keys()).toEqual([]);
+      expect(received).toBeUndefined();
+
+      request.flush(confirmed);
+
+      expect(received).toEqual(confirmed);
+      expect(saved.status).toBe('Proposed');
+    },
+  );
+
+  it.each([404, 409, 422, 503])(
+    'propagates status-update HTTP %s without success or automatic retry',
+    (status) => {
+      const url = `/api/retention-actions/${saved.id}/status`;
+      let success = false;
+      let errorStatus: number | undefined;
+
+      service.updateStatus(saved.id, 'In Progress').subscribe({
+        next: () => {
+          success = true;
+        },
+        error: (error) => {
+          errorStatus = error.status;
+        },
+      });
+
+      const request = http.expectOne(url);
+      expect(request.request.method).toBe('PATCH');
+
+      request.flush(
+        { detail: 'Status update rejected or unconfirmed.' },
+        { status, statusText: 'Request failed' },
+      );
+
+      expect(success).toBe(false);
+      expect(errorStatus).toBe(status);
+      expect(saved.status).toBe('Proposed');
+      http.expectNone(url);
+    },
+  );
+
+  it('propagates a lost status response without automatically retrying', () => {
+    const url = `/api/retention-actions/${saved.id}/status`;
+    let success = false;
+    let errorStatus: number | undefined;
+
+    service.updateStatus(saved.id, 'In Progress').subscribe({
+      next: () => {
+        success = true;
+      },
+      error: (error) => {
+        errorStatus = error.status;
+      },
+    });
+
+    http.expectOne(url).error(new ProgressEvent('error'));
+
+    expect(success).toBe(false);
+    expect(errorStatus).toBe(0);
+    expect(saved.status).toBe('Proposed');
+    http.expectNone(url);
+  });
 });

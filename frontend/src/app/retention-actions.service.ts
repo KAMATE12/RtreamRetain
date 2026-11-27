@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import {
   RetentionAction,
   RetentionActionCreate,
+  RetentionActionStatus,
   RetentionActionsResponse,
 } from './retention-actions.models';
 
@@ -30,6 +31,20 @@ export class RetentionActionsService {
     return this.http.post<RetentionAction>(
       '/api/retention-actions',
       request,
+    );
+  }
+
+  updateStatus(
+    actionId: string,
+    status: RetentionActionStatus,
+  ): Observable<RetentionAction> {
+    // EN: Send only the target status and return the server-confirmed action.
+    // FR: Envoyer uniquement le statut cible et recevoir l'action confirmée.
+    // EN: Never retry automatically when the update outcome is uncertain.
+    // FR: Ne jamais réessayer automatiquement si le résultat est incertain.
+    return this.http.patch<RetentionAction>(
+      `/api/retention-actions/${encodeURIComponent(actionId)}/status`,
+      { status },
     );
   }
 }

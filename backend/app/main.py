@@ -9,16 +9,24 @@ génériques en cas de problème de configuration ou de base de données.
 """
 
 from datetime import date
+from uuid import UUID
+
+from app.retention_action_status import InvalidStatusTransitionError
 
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from app.suggestions import build_plan_suggestions
-from app.retention_action_models import RetentionActionCreate
+from app.retention_action_models import (
+    RetentionActionCreate,
+    RetentionActionStatusUpdate,
+)
 from app.retention_actions import (
+    RetentionActionNotFoundError,
     SuggestionUnavailableError,
     create_retention_action,
     list_retention_actions,
+    update_retention_action_status,
 )
 
 from app.database import get_engine
@@ -343,3 +351,50 @@ def saved_retention_actions():
         ) from None
 
     return {"actions": actions}
+
+@app.patch("/api/retention-actions/{action_id}/status")
+def change_retention_action_status(
+    action_id: UUID,
+    request: RetentionActionStatusUpdate,
+):
+    """Update an action status and report success only after commit."""
+
+    try:
+        # EN: Keep the row lock until commit or rollback.
+        # FR: Conserver le verrou jusqu'à validation ou annulation.
+        engine = get_engine()
+
+        with engine.begin() as connection:
+            saved_action = update_retention_action_status(
+                connection,
+                action_id=action_id,
+                target_status=request.status,
+            )
+
+    except RetentionActionNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="The requested action does not exist.",
+        ) from None
+
+    except InvalidStatusTransitionError:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This transition is not allowed from the stored status. "
+                "Refresh the saved-action list before trying again."
+            ),
+        ) from None
+
+    except (ValueError, SQLAlchemyError):
+        # EN: Hide internal details and do not retry an uncertain update.
+        # FR: Masquer les détails internes et ne pas répéter la modification.
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The status update could not be confirmed. "
+                "Refresh the saved-action list before trying again."
+            ),
+        ) from None
+
+    return saved_action

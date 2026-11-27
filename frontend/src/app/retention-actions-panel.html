@@ -28,7 +28,7 @@
         Close this draft before reviewing another suggestion.
       </p>
 
-      <fieldset [disabled]="saving()">
+      <fieldset [disabled]="saving() || updatingActionId() !== null">
         <legend>Proposal details</legend>
 
         <label for="action-text">Proposed action</label>
@@ -89,7 +89,11 @@
   <button
     type="button"
     (click)="loadActions()"
-    [disabled]="listState() === 'loading'"
+    [disabled]="
+      listState() === 'loading' ||
+      saving() ||
+      updatingActionId() !== null
+    "
   >
     Refresh saved actions
   </button>
@@ -123,6 +127,55 @@
             {{ action.created_at | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC
           </p>
           <p class="identifier">Action ID: {{ action.id }}</p>
+                    <!-- EN: Offer only permitted transitions from the confirmed status. -->
+          <!-- FR: Proposer uniquement les transitions du statut confirmé. -->
+          <div [attr.aria-busy]="updatingActionId() === action.id">
+            @if (allowedNextStatuses(action.status).length > 0) {
+              <div
+                class="buttons"
+                role="group"
+                [attr.aria-label]="'Change status for action ' + action.id"
+              >
+                @for (
+                  nextStatus of allowedNextStatuses(action.status);
+                  track nextStatus
+                ) {
+                  <button
+                    type="button"
+                    [disabled]="
+                      updatingActionId() !== null ||
+                      saving() ||
+                      !!statusErrors()[action.id]
+                    "
+                    (click)="updateStatus(action.id, nextStatus)"
+                  >
+                    Mark as {{ nextStatus }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p>This action is closed. Reopening is not available.</p>
+            }
+
+            @if (updatingActionId() === action.id) {
+              <p role="status">
+                Updating status… Waiting for server confirmation.
+              </p>
+            }
+
+            @if (statusErrors()[action.id]; as message) {
+              <p role="alert">{{ message }}</p>
+            }
+
+            @if (statusMessages()[action.id]; as message) {
+              <p role="status">{{ message }}</p>
+            }
+          </div>
+
+          <p>
+            Completed records finished follow-up work.
+            It does not prove that customer retention improved.
+          </p>
         </article>
       }
     }

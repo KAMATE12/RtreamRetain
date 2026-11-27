@@ -4,7 +4,8 @@ FR: Enregistrer les propositions examinées et relire leur contexte.
 """
 
 from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
+from app.retention_action_status import validate_status_transition
 
 from sqlalchemy import select
 from sqlalchemy.engine import Connection
@@ -84,3 +85,58 @@ def list_retention_actions(connection: Connection) -> list[dict]:
         dict(row)
         for row in connection.execute(statement).mappings()
     ]
+
+class RetentionActionNotFoundError(LookupError):
+    """The requested saved action does not exist."""
+
+
+def update_retention_action_status(
+    connection: Connection,
+    *,
+    action_id: UUID,
+    target_status: str,
+) -> dict:
+    """
+    EN: Lock, validate and update within the caller's transaction.
+    FR: Verrouiller, valider et modifier dans la transaction de l'appelant.
+    """
+
+    # EN: Lock this action before inspecting its stored current status.
+    # FR: Verrouiller cette action avant de vérifier son statut enregistré.
+    statement = (
+        select(retention_action)
+        .where(retention_action.c.id == action_id)
+        .with_for_update()
+    )
+
+    stored = connection.execute(statement).mappings().one_or_none()
+
+    if stored is None:
+        raise RetentionActionNotFoundError(
+            "The requested action does not exist."
+        )
+
+    current_action = dict(stored)
+
+    requires_update = validate_status_transition(
+        current_action["status"],
+        target_status,
+    )
+
+    # EN: Return the unchanged action without issuing an UPDATE.
+    # FR: Renvoyer l'action inchangée sans exécuter d'UPDATE.
+    if not requires_update:
+        return current_action
+
+    # EN: Modify only status; preserve creation time and original context.
+    # FR: Modifier uniquement le statut ; conserver date et contexte.
+    updated = connection.execute(
+        retention_action.update()
+        .where(retention_action.c.id == action_id)
+        .values(status=target_status)
+        .returning(*retention_action.c)
+    ).mappings().one()
+
+    # EN: The caller must commit before reporting success.
+    # FR: L'appelant doit valider la transaction avant d'annoncer le succès.
+    return dict(updated)
