@@ -1,138 +1,49 @@
-/**
- * EN: Make monthly indicators and interface states easy to read.
- * Keep labels beside their values on wide screens and stack them
- * on narrow screens. Provide a visible keyboard focus for retry.
- *
- * FR: Faciliter la lecture des indicateurs et des états de l'interface.
- * Placer les libellés à côté des valeurs sur grand écran et les empiler
- * sur petit écran. Rendre le focus clavier du bouton bien visible.
- */
-
+/* EN: Responsive dashboard, metrics and investigation suggestions.
+   FR: Tableau de bord, indicateurs et suggestions adaptatifs. */
 :host {
   display: block;
+  min-width: 0;
   margin-top: 24px;
 }
 
 section {
-  padding: 26px;
-  background: #ffffff;
+  min-width: 0;
+  padding: 24px;
   border: 1px solid #d6deeb;
-  border-radius: 12px;
-  color: #172b49;
+  border-radius: 16px;
+  background: #fff;
+  color: #172940;
+  box-shadow: 0 4px 18px rgb(23 41 64 / 4%);
 }
 
 h2 {
-  margin-top: 0;
+  margin: 0;
   font-size: 24px;
+  line-height: 1.3;
+}
+
+h3 {
+  margin: 28px 0 12px;
+  font-size: 20px;
+  line-height: 1.4;
 }
 
 p {
   line-height: 1.6;
 }
 
-/* EN: Align each label with its corresponding value.
-   FR: Aligner chaque libellé avec sa valeur. */
-dl {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 24px;
-  margin: 24px 0;
-}
-
-dt,
-dd {
-  padding: 16px 0;
-  border-bottom: 1px solid #e5eaf2;
-}
-
-dt {
-  align-self: stretch;
-  line-height: 1.5;
-}
-
-dd {
-  margin: 0;
-  text-align: right;
-  font-size: 24px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* EN: Distinguish loading and failure using text and visual styling.
-   FR: Distinguer chargement et erreur par le texte et la présentation. */
-[role="status"],
-[role="alert"] {
-  padding: 16px;
-  border-radius: 6px;
-}
-
-[role="status"] {
-  background: #edf3fc;
-  color: #244887;
-}
-
-[role="alert"] {
-  background: #fff1f0;
-  color: #8a2424;
-  border: 1px solid #e7b6b2;
-}
-
-button {
-  min-height: 44px;
-  padding: 12px 20px;
-  border: 0;
-  border-radius: 6px;
-  background: #244887;
-  color: white;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #193765;
-}
-
-button:focus-visible {
-  outline: 3px solid #a45c00;
-  outline-offset: 3px;
-}
-
-/* EN: Keep interpretation guidance readable below the results.
-   FR: Garder les explications lisibles sous les résultats. */
 section > p {
+  max-width: 85ch;
   color: #40516a;
 }
 
-/* EN: Stack labels and values on narrow screens.
-   FR: Empiler les libellés et valeurs sur les petits écrans. */
-@media (max-width: 600px) {
-  section {
-    padding: 20px;
-  }
-
-  dl {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  dt {
-    padding-bottom: 4px;
-    border-bottom: 0;
-  }
-
-  dd {
-    padding-top: 0;
-    text-align: left;
-  }
-}
-
-/* EN: Arrange labelled filters in columns that adapt to available space.
-   FR: Disposer les filtres dans des colonnes adaptées à l'espace disponible. */
+/* EN: Keep scope controls visible and easy to use.
+   FR: Garder les filtres visibles et faciles a utiliser. */
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  margin: 24px 0 16px;
+  margin: 20px 0 12px;
 }
 
 .filter {
@@ -143,70 +54,104 @@ section > p {
 }
 
 .filter label {
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
 }
 
 .filter select {
-  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid #8293ad;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #172b49;
+  border-radius: 8px;
+  background: #fff;
+  color: #172940;
   font: inherit;
 }
 
-.filter select:focus-visible {
-  outline: 3px solid #a45c00;
-  outline-offset: 3px;
-}
-
-.active-selection {
-  padding: 12px;
+section > .active-selection {
+  max-width: none;
+  margin: 12px 0 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
   background: #edf3fc;
-  border-radius: 6px;
+  color: #244887;
+  font-size: 14px;
 }
 
-/* EN: Use one filter per row on narrow screens.
-   FR: Afficher un filtre par ligne sur les petits écrans. */
-@media (max-width: 600px) {
-  .filters {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* EN: Preserve semantic label/value pairs inside metric cards.
+   FR: Conserver les paires libelle/valeur dans les cartes. */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0 28px;
 }
 
-/* EN: Keep comparison columns readable and scrollable on narrow screens.
-   FR: Garder les colonnes lisibles et défilables sur les petits écrans. */
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d6deeb;
+  border-top: 3px solid #31549a;
+  border-radius: 12px;
+  background: #f8faff;
+}
+
+.metric-card dt {
+  color: #40516a;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.metric-card dd {
+  margin: 0;
+  color: #172940;
+  font-size: 30px;
+  font-weight: 750;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.metric-unit {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* EN: Contain horizontal scrolling within the comparison table.
+   FR: Limiter le defilement horizontal a la zone du tableau. */
 .comparison-table-container {
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   margin: 16px 0;
-}
-
-.comparison-table-container:focus-visible {
-  outline: 3px solid #a45c00;
-  outline-offset: 3px;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
 }
 
 .comparison-table {
   width: 100%;
-  min-width: 540px;
+  min-width: 580px;
   border-collapse: collapse;
 }
 
 .comparison-table caption {
-  padding: 0 0 12px;
+  padding: 12px 16px;
   text-align: left;
-  line-height: 1.5;
   color: #40516a;
+  font-size: 14px;
 }
 
 .comparison-table th,
 .comparison-table td {
-  padding: 12px;
-  border-bottom: 1px solid #d6deeb;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5eaf2;
   vertical-align: top;
   line-height: 1.5;
 }
@@ -214,6 +159,7 @@ section > p {
 .comparison-table thead th {
   background: #edf3fc;
   text-align: left;
+  font-size: 14px;
 }
 
 .comparison-table tbody th {
@@ -225,35 +171,124 @@ section > p {
   font-variant-numeric: tabular-nums;
 }
 
-/* EN: Separate investigation proposals from measured indicators.
-   FR: Séparer les propositions d'investigation des indicateurs mesurés. */
+.comparison-table tbody tr:nth-child(even) {
+  background: #f8faff;
+}
+
+.comparison-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+/* EN: Separate proposed investigations from measured results.
+   FR: Distinguer les investigations proposees des resultats mesures. */
 .suggestions {
   margin-top: 28px;
-  padding-top: 20px;
-  border-top: 2px solid #d6deeb;
+  padding-top: 4px;
+  border-top: 1px solid #d6deeb;
 }
 
 .suggestion-reference {
-  padding: 12px;
-  background: #edf3fc;
-  border-radius: 6px;
+  padding: 14px 16px;
+  border: 1px solid #c4d9d5;
+  border-radius: 10px;
+  background: #edf6f3;
+  color: #28564c;
 }
 
 .suggestion-card {
   margin: 16px 0;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid #d6deeb;
-  border-left: 4px solid #244887;
-  border-radius: 6px;
+  border-left: 4px solid #31549a;
+  border-radius: 12px;
+  background: #f8faff;
   overflow-wrap: anywhere;
 }
 
 .suggestion-card h4 {
-  margin-top: 0;
+  margin: 0 0 12px;
   font-size: 18px;
 }
 
+.suggestion-card p {
+  max-width: 85ch;
+}
+
 .suggestion-rule {
-  font-size: 14px;
   color: #40516a;
+  font-size: 14px;
+}
+
+/* EN: Keep loading and errors understandable through text and colour.
+   FR: Expliquer chargement et erreurs avec du texte et des couleurs. */
+[role="status"],
+[role="alert"] {
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+
+[role="status"] {
+  background: #edf3fc;
+  color: #244887;
+}
+
+[role="alert"] {
+  border: 1px solid #e7b6b2;
+  background: #fff1f0;
+  color: #8a2424;
+}
+
+button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #244887;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #193765;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+select:focus-visible,
+.comparison-table-container:focus-visible {
+  outline: 3px solid #985300;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1000px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  section {
+    padding: 16px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  .filters,
+  .metric-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .metric-card,
+  .suggestion-card {
+    padding: 16px;
+  }
 }

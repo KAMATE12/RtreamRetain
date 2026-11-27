@@ -1,1 +1,43 @@
-body { margin: 0; background: #f4f7fb; color: #172940; font-family: Arial, sans-serif; line-height: 1.5; } * { box-sizing: border-box; }
+/* EN: Shared typography and page foundation.
+   FR: Typographie commune et base de la page. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f3f6fa;
+  color: #172940;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: #244887;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid #985300;
+  outline-offset: 4px;
+}
+
+::selection {
+  background: #dbe8ff;
+  color: #172940;
+}

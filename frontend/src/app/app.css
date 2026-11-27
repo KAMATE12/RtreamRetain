@@ -1,11 +1,221 @@
-main { max-width: 840px; margin: 64px auto; padding: 0 24px; }
-.eyebrow { color: #31549a; font-weight: 700; letter-spacing: .09em; font-size: 13px; }
-h1 { max-width: 740px; font-size: clamp(32px, 5vw, 48px); line-height: 1.12; }
-.intro { max-width: 680px; font-size: 18px; line-height: 1.6; color: #40516a; }
-section { background: white; padding: 26px; margin-top: 24px; border: 1px solid #d6deeb; border-radius: 12px; }
-h2 { margin-top: 0; font-size: 21px; }
-dl div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e5eaf2; flex-wrap: wrap; }
-dt { font-weight: 600; } dd { margin: 0; }
-button { background: #244887; color: white; padding: 12px 18px; border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
-button:disabled { opacity: .65; cursor: wait; } button:focus-visible { outline: 3px solid #f4aa36; outline-offset: 3px; }
-li { margin: 10px 0; } .note { color: #536175; font-size: 14px; }
+/* EN: Use desktop space while preserving comfortable reading widths.
+   FR: Utiliser la largeur disponible tout en gardant des textes lisibles. */
+:host {
+  display: block;
+}
+
+main {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 24px;
+}
+
+.page-header {
+  padding-bottom: 8px;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #d6deeb;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #244887;
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.sprint-label {
+  padding: 5px 12px;
+  border: 1px solid #bdcce3;
+  border-radius: 999px;
+  background: #eaf0fa;
+  color: #244887;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.header-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  align-items: center;
+  gap: 32px;
+  padding-top: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #31549a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  max-width: 24ch;
+  margin: 0;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.intro {
+  max-width: 65ch;
+  margin: 12px 0 0;
+  color: #40516a;
+}
+
+.data-notice {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #c4d9d5;
+  border-left: 4px solid #267365;
+  border-radius: 10px;
+  background: #edf6f3;
+  color: #28564c;
+  font-size: 14px;
+}
+
+.data-notice strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+#dashboard {
+  min-width: 0;
+}
+
+.connection-panel {
+  margin-top: 24px;
+  border: 1px solid #d6deeb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+summary {
+  padding: 16px 20px;
+  color: #40516a;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.connection-panel[open] summary {
+  border-bottom: 1px solid #d6deeb;
+}
+
+.connection-panel section {
+  padding: 20px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.connection-description {
+  margin: 8px 0 16px;
+  color: #40516a;
+}
+
+dl {
+  margin: 0 0 20px;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+dt {
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #244887;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #193765;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+footer {
+  padding: 24px 0 0;
+  color: #536175;
+  font-size: 13px;
+  text-align: center;
+}
+
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  z-index: 10;
+  padding: 10px 16px;
+  transform: translateY(-200%);
+  border-radius: 6px;
+  background: #172940;
+  color: #fff;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* EN: Stack the header on narrow screens and at increased zoom.
+   FR: Empiler l'en-tete sur petit ecran et avec un zoom accru. */
+@media (max-width: 760px) {
+  main {
+    padding: 20px 16px;
+  }
+
+  .header-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  h1 {
+    max-width: none;
+  }
+}

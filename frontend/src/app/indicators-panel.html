@@ -72,31 +72,44 @@ Conserver le panneau des actions lors des changements de filtres.
         <p>No observations are available for this month and plan selection.</p>
       }
 
-      <dl>
-        <dt>Beginning-of-month cohort size</dt>
-        <dd>{{ indicators()?.cohort_size ?? 0 }}</dd>
+      <!-- EN: Group each metric label with its value.
+      FR: Regrouper chaque indicateur avec sa valeur. -->
+      <dl class="metric-grid">
+        <div class="metric-card">
+          <dt>Beginning-of-month cohort size</dt>
+          <dd>{{ indicators()?.cohort_size ?? 0 }}</dd>
+        </div>
 
-        <dt>Customers who requested cancellation during the month</dt>
-        <dd>{{ indicators()?.cancellation_count ?? 0 }}</dd>
+        <div class="metric-card">
+          <dt>Customers who requested cancellation during the month</dt>
+          <dd>{{ indicators()?.cancellation_count ?? 0 }}</dd>
+        </div>
 
-        <dt>Monthly cancellation-request rate</dt>
-        <dd>
-          @if (indicators()?.cancellation_rate != null) {
-            {{ indicators()?.cancellation_rate | number:'1.0-2' }}%
-          } @else {
-            No data
-          }
-        </dd>
+        <div class="metric-card">
+          <dt>Monthly cancellation-request rate</dt>
+          <dd>
+            @if (indicators()?.cancellation_rate != null) {
+              {{ indicators()?.cancellation_rate | number:'1.0-2' }}%
+            } @else {
+              No data
+            }
+          </dd>
+        </div>
 
-        <dt>Average viewing hours per cohort customer</dt>
-        <dd>
-          @if (indicators()?.average_viewing_hours != null) {
-            {{ indicators()?.average_viewing_hours | number:'1.0-2' }} hours
-          } @else {
-            No data
-          }
-        </dd>
+        <div class="metric-card">
+          <dt>Average viewing hours per cohort customer</dt>
+          <dd>
+            @if (indicators()?.average_viewing_hours != null) {
+              {{ indicators()?.average_viewing_hours | number:'1.0-2' }}
+              <span class="metric-unit">hours</span>
+            } @else {
+              No data
+            }
+          </dd>
+        </div>
       </dl>
+
+
 
       <!--
       EN: Show comparisons only for a successful or empty dashboard result.

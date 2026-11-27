@@ -1,17 +1,72 @@
+<a class="skip-link" href="#dashboard">Skip to dashboard</a>
+
 <main>
-  <p class="eyebrow">STREAMRETAIN · SPRINT 3</p>
-  <h1>Customer retention starts with understanding.</h1>
-  <p class="intro">An educational project exploring customer cancellations in a fictional streaming platform inspired by IVI.</p>
-  <section aria-labelledby="connection-title">
-    <h2 id="connection-title">Project foundation</h2>
-    <p>This first version checks the connection between the interface, API, and database.</p>
-    <dl aria-live="polite">
-      <div><dt>FastAPI backend</dt><dd>{{ api() }}</dd></div>
-      <div><dt>PostgreSQL database</dt><dd>{{ database() }}</dd></div>
-    </dl>
-    <button type="button" (click)="checkConnections()" [disabled]="checking()">
-      {{ checking() ? 'Checking connections…' : 'Check connections' }}
-    </button>
-  </section>
-<app-indicators-panel></app-indicators-panel>
+  <header class="page-header">
+    <div class="brand-row">
+      <p class="brand">
+        <span class="brand-mark" aria-hidden="true">SR</span>
+        StreamRetain
+      </p>
+      <span class="sprint-label">Sprint 4</span>
+    </div>
+
+    <div class="header-content">
+      <div>
+        <p class="eyebrow">CUSTOMER RETENTION WORKSPACE</p>
+        <h1>Understand patterns. Review next steps.</h1>
+        <p class="intro">
+          Explore monthly cancellation requests, compare subscription
+          plans and organise proposed follow-up actions.
+        </p>
+      </div>
+
+      <p class="data-notice">
+        <strong>Synthetic data only</strong>
+        Educational project inspired by IVI.
+        Proposals are not proven retention solutions.
+      </p>
+    </div>
+  </header>
+
+  <!-- EN: Keep the dashboard and action workflow mounted.
+       FR: Conserver le tableau de bord et le parcours des actions. -->
+  <div id="dashboard" tabindex="-1">
+    <app-indicators-panel></app-indicators-panel>
+  </div>
+
+  <!-- EN: Keep technical checks available in a secondary area.
+       FR: Garder les controles techniques dans une zone secondaire. -->
+  <details class="connection-panel">
+    <summary>Technical connection checks</summary>
+
+    <section aria-labelledby="connection-title">
+      <h2 id="connection-title">Service connections</h2>
+      <p class="connection-description">
+        Check whether the local API and database are available.
+      </p>
+
+      <dl aria-live="polite">
+        <div>
+          <dt>FastAPI backend</dt>
+          <dd>{{ api() }}</dd>
+        </div>
+        <div>
+          <dt>PostgreSQL database</dt>
+          <dd>{{ database() }}</dd>
+        </div>
+      </dl>
+
+      <button
+        type="button"
+        (click)="checkConnections()"
+        [disabled]="checking()"
+      >
+        {{ checking() ? 'Checking connections…' : 'Check connections' }}
+      </button>
+    </section>
+  </details>
+
+  <footer>
+    StreamRetain · Educational prototype · No automatic customer intervention
+  </footer>
 </main>

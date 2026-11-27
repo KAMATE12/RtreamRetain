@@ -109,7 +109,7 @@
       <p>No proposed actions have been saved yet.</p>
     } @else {
       @for (action of actions(); track action.id) {
-        <article>
+        <article class="action-card">
           <h4>{{ action.proposed_action }}</h4>
           <p>
             <strong>Observation month:</strong>
@@ -121,11 +121,21 @@
             <strong>Rule:</strong> {{ action.rule_id }}
             · <strong>Version:</strong> {{ action.rule_version }}
           </p>
-          <p>
-            <strong>Status:</strong> {{ action.status }}
-            · <strong>Created:</strong>
-            {{ action.created_at | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC
-          </p>
+          <div class="action-meta">
+            <span
+              class="status-badge"
+              [class.status-progress]="action.status === 'In Progress'"
+              [class.status-completed]="action.status === 'Completed'"
+              [class.status-dismissed]="action.status === 'Dismissed'"
+            >
+              <strong>Status:</strong> {{ action.status }}
+            </span>
+
+            <span class="creation-date">
+              <strong>Created:</strong>
+              {{ action.created_at | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC
+            </span>
+          </div>
           <p class="identifier">Action ID: {{ action.id }}</p>
                     <!-- EN: Offer only permitted transitions from the confirmed status. -->
           <!-- FR: Proposer uniquement les transitions du statut confirmé. -->
