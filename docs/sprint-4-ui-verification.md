@@ -3,8 +3,7 @@
 Issue: #26
 Sprint: Sprint 4 — November 16–29, 2026
 
-Status: implemented and locally verified.
-Publication and CI evidence remain to be recorded.
+Status: implemented, locally verified and published; GitHub Actions passed.
 Final acceptance review remains pending.
 
 ## Scope
@@ -40,7 +39,7 @@ The project author supplied the following successful execution results:
 The tests cover indicator requests and panels, action requests,
 creation and listing, and status-update behaviour.
 
-These are local results. No CI result for S4-04 is claimed yet.
+These local results are separate from the CI evidence recorded below.
 
 ## Browser observations
 
@@ -130,7 +129,7 @@ retention managers or proven retention effectiveness.
 
 ## Publication and remaining work
 
-- Record the implementation commit and its GitHub Actions result.
+- Publish this documentation update containing the CI evidence.
 - Add repository screenshot evidence and links where available.
 - Complete any outstanding acceptance evidence, including contrast checks
   and precise desktop/zoom viewport records.
@@ -142,3 +141,30 @@ retention managers or proven retention effectiveness.
 - [Monthly indicators](monthly-indicators-dashboard.md)
 - [Retention actions](retention-actions.md)
 - [Sprint 4 plan](sprint-4-plan.md)
+## Publication and CI evidence
+
+Implementation commit: 4315ac3 —
+feat: improve dashboard and retention action readability.
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/4315ac3)
+- [Successful workflow](https://github.com/KAMATE12/RtreamRetain/actions/runs/46084542109)
+
+The supplied GitHub Actions screenshot shows:
+
+| Check | Observed result |
+|---|---|
+| Workflow | Starter checks #58 |
+| Commit | 4315ac3 |
+| Branch | main |
+| Overall result | Success |
+| Backend job | Success, 12 seconds |
+| Frontend job | Success, 20 seconds |
+| Frontend test files | 4 passed |
+| Frontend tests | 79 passed |
+| Total duration | 23 seconds |
+
+The screenshot does not establish backend test counts or execution
+of PostgreSQL integration tests in CI.
+
+Final acceptance review remains pending, including the outstanding
+verification evidence listed above.
