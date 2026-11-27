@@ -678,8 +678,8 @@ Earlier test counts and CI links describe E4-02.
 Statements above that status updates remain future work are superseded
 by this section.
 
-Current E4-03 status: implemented and locally verified.
-Publication, CI evidence and final acceptance review remain pending.
+Current E4-03 status: implemented, locally verified and published; GitHub Actions passed.
+Final acceptance review and issue closure remain pending.
 
 ### Status definitions and transitions
 
@@ -891,13 +891,36 @@ possible network-failure or concurrency outcome.
 E4-02 implementation was published in commit 2bc988e.
 Its publication and CI evidence were published in commit ac9689d.
 
-No E4-03 implementation commit or CI result is recorded yet.
-Earlier E4-02 CI results do not validate these new changes.
+E4-03 implementation, tests and documentation were published in commit
+7fc2c02: feat: update retention action statuses with atomic validation.
+
+- [Implementation commit](https://github.com/KAMATE12/RtreamRetain/commit/7fc2c02)
+- [Successful GitHub Actions run](https://github.com/KAMATE12/RtreamRetain/actions/runs/46020181002)
+
+The supplied workflow screenshot shows:
+
+| Check | Observed result |
+|---|---|
+| Workflow | Starter checks #56 |
+| Commit | 7fc2c02 |
+| Branch | main |
+| Overall result | Success |
+| Backend job | Success, 13 seconds |
+| Frontend job | Success, 32 seconds |
+| Frontend test files | 4 passed |
+| Frontend tests | 79 passed |
+| Total workflow duration | 35 seconds |
+
+The screenshot does not show backend test counts or PostgreSQL
+integration configuration. It does not establish that PostgreSQL
+integration tests ran in CI.
+
+The separate local backend execution passed 393 tests with PostgreSQL
+integration enabled, without skips and with one deprecation warning.
 
 Remaining E4-03 work:
 
-- Review and publish the implementation, tests and documentation.
-- Record the corresponding GitHub Actions result.
+- Publish this documentation update containing the CI evidence.
 - Add completion evidence to issue #25.
 - Review acceptance criteria before closing the issue and marking it Done.
 
