@@ -1,0 +1,11 @@
+customer_id,observation_month,plan,tenure_months,viewing_hours,payment_failures,support_requests,cancelled_in_month
+C900001,2026-08-01,Basic,2,4,1,1,true
+C900002,2026-08-01,Basic,4,8,0,0,false
+C900003,2026-08-01,Basic,6,12,0,1,false
+C900004,2026-08-01,Basic,8,16,0,0,false
+C900005,2026-08-01,Standard,3,14,0,0,false
+C900006,2026-08-01,Standard,5,18,0,1,false
+C900007,2026-08-01,Standard,7,22,0,0,false
+C900008,2026-08-01,Standard,9,26,0,0,false
+C900009,2026-08-01,Premium,10,20,1,2,true
+C900010,2026-08-01,Premium,12,40,0,0,false
