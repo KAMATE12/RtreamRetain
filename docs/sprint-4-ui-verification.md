@@ -168,3 +168,60 @@ of PostgreSQL integration tests in CI.
 
 Final acceptance review remains pending, including the outstanding
 verification evidence listed above.
+
+## Additional viewport and contrast verification
+
+This section updates the earlier limitations concerning zoom viewport
+measurements and the absence of numerical colour-contrast checks.
+
+### Browser zoom measurements
+
+The project author supplied these console results after following the
+100%, then 200% browser-zoom sequence, with device emulation disabled:
+
+| Browser zoom | Viewport width | Viewport height | Page horizontal overflow |
+|---|---|---|---|
+| 100% | 450 CSS px | 596 CSS px | false |
+| 200% | 225 CSS px | 298 CSS px | false |
+
+Developer tools were docked beside the application, reducing its
+available width. These are not full-window desktop dimensions.
+The author previously confirmed that important information and
+controls remained usable at 200% zoom.
+
+Earlier wide-screen screenshots provide qualitative layout evidence;
+their exact viewport dimensions remain unrecorded.
+
+### Calculated colour contrast
+
+Ratios were calculated from the supplied CSS hexadecimal colours,
+using sRGB relative luminance and the formula
+(Llighter + 0.05) / (Ldarker + 0.05).
+
+| Element | Text | Background | Contrast ratio |
+|---|---|---|---|
+| Main text | #172940 | #f3f6fa | 13.57:1 |
+| Paragraph | #40516a | #ffffff | 8.07:1 |
+| Secondary text on light panel | #536175 | #f8faff | 6.03:1 |
+| Primary button | #ffffff | #244887 | 8.93:1 |
+| Primary button hover | #ffffff | #193765 | 11.83:1 |
+| Proposed status | #244887 | #edf3fc | 8.01:1 |
+| In Progress status | #704900 | #fff5de | 7.33:1 |
+| Completed status | #245a3d | #edf6f0 | 7.31:1 |
+| Dismissed status | #465267 | #f0f2f5 | 7.03:1 |
+| Synthetic-data notice | #28564c | #edf6f3 | 7.55:1 |
+| Error message | #8a2424 | #fff1f0 | 8.10:1 |
+
+These calculations cover the listed opaque text/background pairs.
+They do not measure rendered pixels, disabled-control opacity,
+all borders, focus indicators or every possible interface state.
+They are a practical colour check, not an accessibility certification.
+
+### Acceptance evidence still to link
+
+Before-and-after screenshots were supplied in the project conversation.
+Their publication in issue #26 or the repository has not been confirmed.
+
+The implementation and CI evidence are already published.
+Final issue acceptance should reference this verification record and
+the screenshots, while retaining the limitations documented here.
